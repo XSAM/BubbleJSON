@@ -33,51 +33,51 @@ static BubbleJson gm_BubbleJson;
 static void TestParseNull()
 {
     auto result = gm_BubbleJson.Parse("null");
-    EXPECT_EQ_INT(ParseResult_Ok, result.first);
-    EXPECT_EQ_INT(ValueType_Null, result.second->type);
+    EXPECT_EQ_INT(ParseResult_Ok, get<0>(result));
+    EXPECT_EQ_INT(ValueType_Null, get<1>(result)->type);
 }
 
 static void TestParseTrue()
 {
     auto result = gm_BubbleJson.Parse("true");
-    EXPECT_EQ_INT(ParseResult_Ok, result.first);
-    EXPECT_EQ_INT(ValueType_True, result.second->type);
+    EXPECT_EQ_INT(ParseResult_Ok, get<0>(result));
+    EXPECT_EQ_INT(ValueType_True, get<1>(result)->type);
 }
 
 static void TestParseFalse()
 {
     auto result = gm_BubbleJson.Parse("false");
-    EXPECT_EQ_INT(ParseResult_Ok, result.first);
-    EXPECT_EQ_INT(ValueType_False, result.second->type);
+    EXPECT_EQ_INT(ParseResult_Ok, get<0>(result));
+    EXPECT_EQ_INT(ValueType_False, get<1>(result)->type);
 }
 
 static void TestParseExpectValue()
 {
-    pair<ParseResults, BubbleValue*> result = gm_BubbleJson.Parse("");
-    EXPECT_EQ_INT(ParseResult_ExpectValue, result.first);
-    EXPECT_EQ_INT(ValueType_Null, result.second->type);
+    tuple<ParseResults, BubbleValue*> result = gm_BubbleJson.Parse("");
+    EXPECT_EQ_INT(ParseResult_ExpectValue, get<0>(result));
+    EXPECT_EQ_INT(ValueType_Null, get<1>(result)->type);
 
     result = gm_BubbleJson.Parse(" ");
-    EXPECT_EQ_INT(ParseResult_ExpectValue, result.first);
-    EXPECT_EQ_INT(ValueType_Null, result.second->type);
+    EXPECT_EQ_INT(ParseResult_ExpectValue, get<0>(result));
+    EXPECT_EQ_INT(ValueType_Null, get<1>(result)->type);
 }
 
 static void TestParseInvalidValue()
 {
     auto result = gm_BubbleJson.Parse("ull");
-    EXPECT_EQ_INT(ParseResult_InvalidValue, result.first);
-    EXPECT_EQ_INT(ValueType_Null, result.second->type);
+    EXPECT_EQ_INT(ParseResult_InvalidValue, get<0>(result));
+    EXPECT_EQ_INT(ValueType_Null, get<1>(result)->type);
 
     result = gm_BubbleJson.Parse(".,");
-    EXPECT_EQ_INT(ParseResult_InvalidValue, result.first);
-    EXPECT_EQ_INT(ValueType_Null, result.second->type);
+    EXPECT_EQ_INT(ParseResult_InvalidValue, get<0>(result));
+    EXPECT_EQ_INT(ValueType_Null, get<1>(result)->type);
 }
 
 static void TestParseRootNotSingular()
 {
     auto result = gm_BubbleJson.Parse("true a");
-    EXPECT_EQ_INT(ParseResult_RootNotSingular, result.first);
-    EXPECT_EQ_INT(ValueType_True, result.second->type);
+    EXPECT_EQ_INT(ParseResult_RootNotSingular, get<0>(result));
+    EXPECT_EQ_INT(ValueType_True, get<1>(result)->type);
 }
 
 static void TestParse()

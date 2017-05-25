@@ -7,6 +7,7 @@
 
 #include "Struct.h"
 #include <utility>
+#include <tuple>
 #include <cassert>
 
 using namespace std;
@@ -17,7 +18,8 @@ class BubbleJson
 {
 public:
     BubbleJson();
-    pair<ParseResults, BubbleValue *> Parse(const char *json);
+    tuple<ParseResults, BubbleValue *> Parse(const char *json);
+    ~BubbleJson();
 private:
     BubbleContent* content;
     BubbleValue* value;

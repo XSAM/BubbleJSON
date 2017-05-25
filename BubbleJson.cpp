@@ -12,7 +12,13 @@ BubbleJson::BubbleJson()
     this->value = new BubbleValue();
 }
 
-pair<ParseResults, BubbleValue *> BubbleJson::Parse(const char *json)
+BubbleJson::~BubbleJson()
+{
+    delete this->content;
+    //delete this->value;
+}
+
+tuple<ParseResults, BubbleValue *> BubbleJson::Parse(const char *json)
 {
     this->content->json = json;
     this->value->type = ValueType_Null;
