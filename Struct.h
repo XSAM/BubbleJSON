@@ -13,7 +13,8 @@ enum ParseResults
     ParseResult_Ok,
     ParseResult_ExpectValue,
     ParseResult_InvalidValue,
-    ParseResult_RootNotSingular
+    ParseResult_RootNotSingular,
+    ParseResult_NumberTooBig
 };
 
 enum ValueTypes
@@ -34,6 +35,7 @@ struct BubbleContent
 
 struct BubbleValue
 {
+    double number;
     ValueTypes type;
 };
 

@@ -26,6 +26,7 @@ private:
 
     void Expect(const char expectChar);
     void ParseWhitespace();
+    ParseResults ParseNumber();
 
     ParseResults ParseValue();
     ParseResults ParseLiteral(const char *expectJson, ValueTypes expectResult);

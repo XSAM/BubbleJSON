@@ -3,6 +3,9 @@
 //
 
 #include "BubbleJson.h"
+#include <cerrno>
+#include <cmath>
+#include <iostream>
 
 using namespace bubbleJson;
 
@@ -15,7 +18,7 @@ BubbleJson::BubbleJson()
 BubbleJson::~BubbleJson()
 {
     delete this->content;
-    //delete this->value;
+    delete this->value;
 }
 
 tuple<ParseResults, BubbleValue *> BubbleJson::Parse(const char *json)
@@ -30,6 +33,7 @@ tuple<ParseResults, BubbleValue *> BubbleJson::Parse(const char *json)
         ParseWhitespace();
         if (*this->content->json != '\0')
         {
+            this->value->type = ValueType_Null;
             result = ParseResult_RootNotSingular;
         }
     }
@@ -50,6 +54,49 @@ void BubbleJson::ParseWhitespace()
     this->content->json = p;
 }
 
+ParseResults BubbleJson::ParseNumber()
+{
+    const char *p = this->content->json;
+
+    auto IsDigit1To9 = [&p]()->bool {
+        return (*p >= '1' && *p <= '9');
+    };
+    auto IsDigit = [&p]()->bool {
+        return (*p >= '0' && *p <= '9');
+    };
+
+    if (*p == '-') p++;
+    if (*p == '0') p++;
+    else
+    {
+        if (!IsDigit1To9()) return ParseResult_InvalidValue;
+        p++;
+        while (IsDigit()) { p++; }
+    }
+    if (*p == '.')
+    {
+        p++;
+        if (!IsDigit()) return ParseResult_InvalidValue;
+        p++;
+        while (IsDigit()) { p++; }
+    }
+    if (*p == 'e' || *p == 'E')
+    {
+        p++;
+        if (*p == '+' || *p == '-') p++;
+        while (IsDigit()) { p++; }
+    }
+
+    errno = 0;
+    this->value->number = strtod(this->content->json, NULL);
+    if (errno == ERANGE && (this->value->number == HUGE_VAL || this->value->number == -HUGE_VAL))
+        return ParseResult_NumberTooBig;
+    this->value->type = ValueType_Number;
+    this->content->json = p;
+
+    return ParseResult_Ok;
+}
+
 ParseResults BubbleJson::ParseValue()
 {
     switch (*this->content->json)
@@ -63,7 +110,7 @@ ParseResults BubbleJson::ParseValue()
         case '\0':
             return ParseResult_ExpectValue;
         default:
-            return ParseResult_InvalidValue;
+            return ParseNumber();
     }
 }
 
