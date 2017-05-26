@@ -4,6 +4,7 @@
 
 #include <iostream>
 #include <cassert>
+#include <cstring>
 #include "BubbleJson.h"
 
 
@@ -16,10 +17,9 @@ static int g_TestPass;
 
 static BubbleJson gm_BubbleJson;
 
-#define EXPECT_EQ_BASE(expect, actual, format)\
+#define EXPECT_EQ_BASE(equality, expect, actual, format)\
     do {\
         g_TestCount++;\
-        bool equality = (expect) == (actual);\
         if (equality)\
             g_TestPass++;\
         else {\
@@ -28,8 +28,10 @@ static BubbleJson gm_BubbleJson;
         }\
     } while(0)
 
-#define EXPECT_EQ_INT(expect, actual) EXPECT_EQ_BASE(expect, actual, "%d")
-#define EXPECT_EQ_DOUBLE(expect, actual) EXPECT_EQ_BASE(expect, actual, "%.17g")
+#define EXPECT_EQ_INT(expect, actual) EXPECT_EQ_BASE((expect) == (actual), expect, actual, "%d")
+#define EXPECT_EQ_DOUBLE(expect, actual) EXPECT_EQ_BASE((expect) == (actual), expect, actual, "%.17g")
+#define EXPECT_EQ_STRING(expect, actual, alength) \
+    EXPECT_EQ_BASE(sizeof(expect) - 1 == alength && memcmp(expect, actual, alength) == 0, expect, actual, "%s")
 
 static void TestParseNull()
 {
@@ -110,7 +112,7 @@ static void TestParseNumberTooBig()
         result = gm_BubbleJson.Parse(json);\
         EXPECT_EQ_INT(ParseResult_Ok, get<0>(result));\
         EXPECT_EQ_INT(ValueType_Number, get<1>(result)->type);\
-        EXPECT_EQ_DOUBLE(expect, get<1>(result)->number);\
+        EXPECT_EQ_DOUBLE(expect, get<1>(result)->u.number);\
     } while(0)
 
 static void TestParseNumber() {
@@ -148,6 +150,50 @@ static void TestParseNumber() {
     TEST_NUMBER(-1.7976931348623157e+308, "-1.7976931348623157e+308");
 }
 
+#define TEST_STRING(expect, json)\
+    do {\
+        result = gm_BubbleJson.Parse(json);\
+        EXPECT_EQ_INT(ParseResult_Ok, get<0>(result));\
+        EXPECT_EQ_INT(ValueType_String, get<1>(result)->type);\
+        EXPECT_EQ_STRING(expect, get<1>(result)->u.string.literal, get<1>(result)->u.string.length);\
+    } while(0)
+
+static void TestParseString()
+{
+    tuple<ParseResults, BubbleValue*> result;
+
+    TEST_STRING("", "\"\"");
+    TEST_STRING("Hello", "\"Hello\"");
+    TEST_STRING("Hello\nWorld", "\"Hello\\nWorld\"");
+    TEST_STRING("\" \\ / \b \f \n \r \t", "\"\\\" \\\\ \\/ \\b \\f \\n \\r \\t\"");
+}
+
+static void TestParseMissingQuotationMark()
+{
+    tuple<ParseResults, BubbleValue*> result;
+
+    TEST_ERROR(ParseResult_MissQuotationMark, "\"");
+    TEST_ERROR(ParseResult_MissQuotationMark, "\"abc");
+}
+
+static void TestParseInvalidStringEscape()
+{
+    tuple<ParseResults, BubbleValue*> result;
+
+    TEST_ERROR(ParseResult_InvalidStringEscape, "\"\\v\"");
+    TEST_ERROR(ParseResult_InvalidStringEscape, "\"\\'\"");
+    TEST_ERROR(ParseResult_InvalidStringEscape, "\"\\0\"");
+    TEST_ERROR(ParseResult_InvalidStringEscape, "\"\\x12\"");
+}
+
+static void TestParseInvalidStringChar()
+{
+    tuple<ParseResults, BubbleValue*> result;
+
+    TEST_ERROR(ParseResult_InvalidStringChar, "\"\x19");
+    TEST_ERROR(ParseResult_InvalidStringChar, "\"\x1");
+}
+
 static void TestParse()
 {
     TestParseNull();
@@ -157,6 +203,10 @@ static void TestParse()
     TestParseInvalidValue();
     TestParseRootNotSingular();
     TestParseNumber();
+    TestParseString();
+    TestParseMissingQuotationMark();
+    TestParseInvalidStringEscape();
+    TestParseInvalidStringChar();
 }
 
 int main()

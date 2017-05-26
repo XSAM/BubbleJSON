@@ -6,6 +6,8 @@
 #define BUBBLEJSON_STRUCT_H
 
 
+#include <cstdio>
+
 namespace bubbleJson {
 
 enum ParseResults
@@ -14,7 +16,10 @@ enum ParseResults
     ParseResult_ExpectValue,
     ParseResult_InvalidValue,
     ParseResult_RootNotSingular,
-    ParseResult_NumberTooBig
+    ParseResult_NumberTooBig,
+    ParseResult_InvalidStringChar,
+    ParseResult_InvalidStringEscape,
+    ParseResult_MissQuotationMark
 };
 
 enum ValueTypes
@@ -28,14 +33,20 @@ enum ValueTypes
     ValueType_Object
 };
 
-struct BubbleContent
+struct BubbleContext
 {
     const char* json;
+    char* stack;
+    size_t size, top;
 };
 
 struct BubbleValue
 {
-    double number;
+    union
+    {
+        double number;
+        struct { char* literal; size_t length;} string;
+    }u;
     ValueTypes type;
 };
 

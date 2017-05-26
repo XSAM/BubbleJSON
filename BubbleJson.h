@@ -21,15 +21,32 @@ public:
     tuple<ParseResults, BubbleValue *> Parse(const char *json);
     ~BubbleJson();
 private:
-    BubbleContent* content;
+    BubbleContext* context;
     BubbleValue* value;
+    const size_t stackInitSize = 256;
+    void InitBubbleValue();
 
     void Expect(const char expectChar);
     void ParseWhitespace();
     ParseResults ParseNumber();
-
+    ParseResults ParseString();
     ParseResults ParseValue();
     ParseResults ParseLiteral(const char *expectJson, ValueTypes expectResult);
+
+    void MemoryFreeValueString();
+    void MemoryFreeContextStack();
+    void SetNull();
+    bool GetBoolean();
+    void SetBoolean(int boolean);
+    double GetNumber();
+    void SetNumber(double number);
+    const char * GetString();
+    void SetString(const char* string, size_t length);
+    size_t GetStringLength();
+
+    void BubbleContextPushChar(char ch);
+    void* BubbleContextPush(size_t size);
+    void* BubbleContextPop(size_t size);
 };
 
 }
