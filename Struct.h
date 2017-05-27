@@ -19,7 +19,9 @@ enum ParseResults
     ParseResult_NumberTooBig,
     ParseResult_InvalidStringChar,
     ParseResult_InvalidStringEscape,
-    ParseResult_MissQuotationMark
+    ParseResult_MissQuotationMark,
+    ParseResult_InvalidUnicodeHex,
+    ParseResult_InvalidUnicodeSurrogate
 };
 
 enum ValueTypes

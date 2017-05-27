@@ -32,6 +32,8 @@ private:
     ParseResults ParseString();
     ParseResults ParseValue();
     ParseResults ParseLiteral(const char *expectJson, ValueTypes expectResult);
+    const char * ParseHexToInt(const char *ch, unsigned *number);
+    void EncodeUTF8(unsigned number);
 
     void MemoryFreeValueString();
     void MemoryFreeContextStack();

@@ -25,8 +25,10 @@ BubbleJson::~BubbleJson()
 
 tuple<ParseResults, BubbleValue *> BubbleJson::Parse(const char *json)
 {
-    MemoryFreeContextStack();
+    InitBubbleValue();
     MemoryFreeValueString();
+    MemoryFreeContextStack();
+
     this->context->json = json;
     this->value->type = ValueType_Null;
 
@@ -111,22 +113,30 @@ ParseResults BubbleJson::ParseString()
     BubbleContext* c = this->context;
     size_t originTop = c->top;
     size_t lenght;
+    unsigned highSurrogate, lowSurrogate;
+
+    auto ReturnError = [=,&c](ParseResults parseResult){
+        c->top = originTop;
+        return parseResult;
+    };
+
     Expect('\"');
     const char* p = c->json;
     while (true)
     {
-        switch (*p)
+        //traverse json
+        char ch = *p;
+        p++;
+        switch (ch)
         {
             case '\"':
                 lenght = c->top - originTop;
                 SetString((const char*)BubbleContextPop(lenght),lenght);
                 //current p point '\"' character
-                p++;
                 c->json = p;
                 return ParseResult_Ok;
             case '\\':
-                p++;
-                switch (*p) {
+                switch (*p++) {
                     case '\"': BubbleContextPushChar('\"'); break;
                     case '\\': BubbleContextPushChar('\\'); break;
                     case '/':  BubbleContextPushChar('/' ); break;
@@ -135,6 +145,23 @@ ParseResults BubbleJson::ParseString()
                     case 'n':  BubbleContextPushChar('\n'); break;
                     case 'r':  BubbleContextPushChar('\r'); break;
                     case 't':  BubbleContextPushChar('\t'); break;
+                    case 'u':
+                        if (!(p = ParseHexToInt(p, &highSurrogate)))
+                            return ReturnError(ParseResult_InvalidUnicodeHex);
+                        if (highSurrogate >= 0xD800 && highSurrogate <= 0xD8FF)//surrogate pair
+                        {
+                            if (*p++ != '\\')
+                                return ReturnError(ParseResult_InvalidUnicodeSurrogate);
+                            if (*p++ != 'u')
+                                return ReturnError(ParseResult_InvalidUnicodeSurrogate);
+                            if (!(p = ParseHexToInt(p, &lowSurrogate)))
+                                return ReturnError(ParseResult_InvalidUnicodeHex);
+                            if (lowSurrogate < 0xDC00 || lowSurrogate > 0xDFFF)
+                                return ReturnError(ParseResult_InvalidUnicodeSurrogate);
+                            highSurrogate = (((highSurrogate - 0xD800) << 10) | (lowSurrogate - 0xDC00)) + 0x10000;
+                        }
+                        EncodeUTF8(highSurrogate);
+                        break;
                     default:
                         c->top = originTop;
                         return ParseResult_InvalidStringEscape;
@@ -144,15 +171,13 @@ ParseResults BubbleJson::ParseString()
                 c->top = originTop;
                 return ParseResult_MissQuotationMark;
             default:
-                if (*p < 0x20)
+                if (ch < 0x20)
                 {
                     c->top = originTop;
                     return ParseResult_InvalidStringChar;
                 }
-                BubbleContextPushChar(*p);
+                BubbleContextPushChar(ch);
         }
-        //traverse json
-        p++;
     }
 }
 
@@ -303,6 +328,46 @@ void* BubbleJson::BubbleContextPop(size_t size)
     assert(this->context->top >= size);
     this->context->top -= size;
     return this->context->stack + this->context->top;
+}
+
+const char * BubbleJson::ParseHexToInt(const char *ch, unsigned *number)
+{
+    *number = 0;
+
+    for (int i = 0; i < 4; i++)
+    {
+        *number <<= 4;
+        if      (*ch >= '0' && *ch <= '9') *number |= (unsigned)*ch - '0';
+        else if (*ch >= 'A' && *ch <= 'F') *number |= (unsigned)*ch - 'A' + 10;//'A' meaning 10 in hex
+        else if (*ch >= 'a' && *ch <= 'f') *number |= (unsigned)*ch - 'a' + 10;
+        else return nullptr;
+        ch++;
+    }
+    return ch;
+}
+
+void BubbleJson::EncodeUTF8(unsigned number)
+{
+    if (number <= 0x7F)
+        BubbleContextPushChar(number & 0xFF);
+    else if (number <= 0x7FF)
+    {
+        BubbleContextPushChar(0xC0 | ((number >> 6) & 0xFF));
+        BubbleContextPushChar(0x80 | ((number     ) & 0x3F));
+    }
+    else if (number <= 0xFFFF)
+    {
+        BubbleContextPushChar(0xE0 | ((number >> 12) & 0xFF));
+        BubbleContextPushChar(0x80 | ((number >> 6) & 0x3F));
+        BubbleContextPushChar(0x80 | ((number     ) & 0x3F));
+    }
+    else if (number <= 0x10FFFF)
+    {
+        BubbleContextPushChar(0xF0 | ((number >> 18) & 0xFF));
+        BubbleContextPushChar(0x80 | ((number >> 12) & 0x3F));
+        BubbleContextPushChar(0x80 | ((number >> 6) & 0x3F));
+        BubbleContextPushChar(0x80 | ((number     ) & 0x3F));
+    }
 }
 
 

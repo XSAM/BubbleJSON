@@ -6,6 +6,7 @@
 #include <cassert>
 #include <cstring>
 #include "BubbleJson.h"
+#include "Struct.h"
 
 
 using namespace std;
@@ -166,6 +167,43 @@ static void TestParseString()
     TEST_STRING("Hello", "\"Hello\"");
     TEST_STRING("Hello\nWorld", "\"Hello\\nWorld\"");
     TEST_STRING("\" \\ / \b \f \n \r \t", "\"\\\" \\\\ \\/ \\b \\f \\n \\r \\t\"");
+
+    TEST_STRING("\x24", "\"\\u0024\"");         /* Dollar sign U+0024 */
+    TEST_STRING("\xC2\xA2", "\"\\u00A2\"");     /* Cents sign U+00A2 */
+    TEST_STRING("\xE2\x82\xAC", "\"\\u20AC\""); /* Euro sign U+20AC */
+    TEST_STRING("\xF0\x9D\x84\x9E", "\"\\uD834\\uDD1E\"");  /* G clef sign U+1D11E */
+    TEST_STRING("\xF0\x9D\x84\x9E", "\"\\ud834\\udd1e\"");  /* G clef sign U+1D11E */
+    TEST_STRING("测试", "\"\\u6D4B\\u8BD5\"");
+}
+
+static void TestParseInvalidUnicodeHex()
+{
+    tuple<ParseResults, BubbleValue*> result;
+
+    TEST_ERROR(ParseResult_InvalidUnicodeHex, "\"\\u\"");
+    TEST_ERROR(ParseResult_InvalidUnicodeHex, "\"\\u0\"");
+    TEST_ERROR(ParseResult_InvalidUnicodeHex, "\"\\u01\"");
+    TEST_ERROR(ParseResult_InvalidUnicodeHex, "\"\\u012\"");
+    TEST_ERROR(ParseResult_InvalidUnicodeHex, "\"\\u/000\"");
+    TEST_ERROR(ParseResult_InvalidUnicodeHex, "\"\\uG000\"");
+    TEST_ERROR(ParseResult_InvalidUnicodeHex, "\"\\u0/00\"");
+    TEST_ERROR(ParseResult_InvalidUnicodeHex, "\"\\u0G00\"");
+    TEST_ERROR(ParseResult_InvalidUnicodeHex, "\"\\u0/00\"");
+    TEST_ERROR(ParseResult_InvalidUnicodeHex, "\"\\u00G0\"");
+    TEST_ERROR(ParseResult_InvalidUnicodeHex, "\"\\u000/\"");
+    TEST_ERROR(ParseResult_InvalidUnicodeHex, "\"\\u000G\"");
+    TEST_ERROR(ParseResult_InvalidUnicodeHex, "\"\\u 123\"");
+}
+
+static void TestParseInvalidUnicodeSurrogate()
+{
+    tuple<ParseResults, BubbleValue*> result;
+
+    TEST_ERROR(ParseResult_InvalidUnicodeSurrogate, "\"\\uD800\"");
+    TEST_ERROR(ParseResult_InvalidUnicodeSurrogate, "\"\\uDBFF\"");
+    TEST_ERROR(ParseResult_InvalidUnicodeSurrogate, "\"\\uD800\\\\\"");
+    TEST_ERROR(ParseResult_InvalidUnicodeSurrogate, "\"\\uD800\\uDBFF\"");
+    TEST_ERROR(ParseResult_InvalidUnicodeSurrogate, "\"\\uD800\\uE000\"");
 }
 
 static void TestParseMissingQuotationMark()
@@ -194,6 +232,8 @@ static void TestParseInvalidStringChar()
     TEST_ERROR(ParseResult_InvalidStringChar, "\"\x1");
 }
 
+
+
 static void TestParse()
 {
     TestParseNull();
@@ -207,6 +247,7 @@ static void TestParse()
     TestParseMissingQuotationMark();
     TestParseInvalidStringEscape();
     TestParseInvalidStringChar();
+    TestParseInvalidUnicodeHex();
 }
 
 int main()
