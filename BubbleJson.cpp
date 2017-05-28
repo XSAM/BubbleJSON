@@ -25,30 +25,29 @@ BubbleJson::~BubbleJson()
 
 tuple<ParseResults, BubbleValue *> BubbleJson::Parse(const char *json)
 {
-    InitBubbleValue();
-    MemoryFreeValueString();
+    BubbleValue* bubbleValue = new BubbleValue();
+    InitBubbleValue(bubbleValue);
     MemoryFreeContextStack();
 
     this->context->json = json;
-    this->value->type = ValueType_Null;
 
     ParseWhitespace();
-    ParseResults result = ParseValue();
+    ParseResults result = ParseValue(bubbleValue);
     if (result == ParseResult_Ok)
     {
         ParseWhitespace();
         if (*this->context->json != '\0')
         {
-            this->value->type = ValueType_Null;
+            bubbleValue->type = ValueType_Null;
             result = ParseResult_RootNotSingular;
         }
     }
-    return make_pair(result, this->value);
+    return make_pair(result, bubbleValue);
 }
 
-inline void BubbleJson::InitBubbleValue()
+inline void BubbleJson::InitBubbleValue(BubbleValue *bubbleValue)
 {
-    this->value->type = ValueType_Null;
+    bubbleValue->type = ValueType_Null;
 }
 
 inline void BubbleJson::Expect(const char expectChar)
@@ -65,7 +64,7 @@ void BubbleJson::ParseWhitespace()
     this->context->json = p;
 }
 
-ParseResults BubbleJson::ParseNumber()
+ParseResults BubbleJson::ParseNumber(BubbleValue *bubbleValue)
 {
     const char* p = this->context->json;
 
@@ -99,16 +98,16 @@ ParseResults BubbleJson::ParseNumber()
     }
 
     errno = 0;
-    this->value->u.number = strtod(this->context->json, NULL);
-    if (errno == ERANGE && (this->value->u.number == HUGE_VAL || this->value->u.number == -HUGE_VAL))
+    bubbleValue->u.number = strtod(this->context->json, NULL);
+    if (errno == ERANGE && (bubbleValue->u.number == HUGE_VAL || bubbleValue->u.number == -HUGE_VAL))
         return ParseResult_NumberTooBig;
-    this->value->type = ValueType_Number;
+    bubbleValue->type = ValueType_Number;
     this->context->json = p;
 
     return ParseResult_Ok;
 }
 
-ParseResults BubbleJson::ParseString()
+ParseResults BubbleJson::ParseString(BubbleValue *bubbleValue)
 {
     BubbleContext* c = this->context;
     size_t originTop = c->top;
@@ -131,7 +130,7 @@ ParseResults BubbleJson::ParseString()
         {
             case '\"':
                 lenght = c->top - originTop;
-                SetString((const char*)BubbleContextPop(lenght),lenght);
+                SetString(bubbleValue, (const char *) BubbleContextPop(lenght), lenght);
                 //current p point '\"' character
                 c->json = p;
                 return ParseResult_Ok;
@@ -181,21 +180,21 @@ ParseResults BubbleJson::ParseString()
     }
 }
 
-ParseResults BubbleJson::ParseValue()
+ParseResults BubbleJson::ParseValue(BubbleValue *bubbleValue)
 {
     switch (*this->context->json)
     {
-        case 't':   return ParseLiteral("true", ValueType_True);
-        case 'f':   return ParseLiteral("false", ValueType_False);
-        case 'n':   return ParseLiteral("null", ValueType_Null);
+        case 't':   return ParseLiteral(bubbleValue, "true", ValueType_True);
+        case 'f':   return ParseLiteral(bubbleValue, "false", ValueType_False);
+        case 'n':   return ParseLiteral(bubbleValue, "null", ValueType_Null);
         case '\0':  return ParseResult_ExpectValue;
-        case '\"':  return ParseString();
+        case '\"':  return ParseString(bubbleValue);
         default:
-            return ParseNumber();
+            return ParseNumber(bubbleValue);
     }
 }
 
-ParseResults BubbleJson::ParseLiteral(const char *expectJson, ValueTypes expectResult)
+ParseResults BubbleJson::ParseLiteral(BubbleValue *bubbleValue, const char *expectJson, ValueTypes expectResult)
 {
     Expect(expectJson[0]);
 
@@ -208,19 +207,19 @@ ParseResults BubbleJson::ParseLiteral(const char *expectJson, ValueTypes expectR
             return ParseResult_InvalidValue;
     }
     this->context->json += i;
-    this->value->type = expectResult;
+    bubbleValue->type = expectResult;
     return ParseResult_Ok;
 }
 
-void BubbleJson::MemoryFreeValueString()
+void BubbleJson::MemoryFreeValueString(BubbleValue *bubbleValue)
 {
-    if(this->value->type == ValueType_String)
+    if(bubbleValue->type == ValueType_String)
     {
-        free(this->value->u.string.literal);
-        this->value->u.string.literal = nullptr;
+        free(bubbleValue->u.string.literal);
+        bubbleValue->u.string.literal = nullptr;
     }
 
-    this->value->type = ValueType_Null;
+    bubbleValue->type = ValueType_Null;
 }
 
 void BubbleJson::MemoryFreeContextStack()
@@ -234,63 +233,62 @@ void BubbleJson::MemoryFreeContextStack()
     }
 }
 
-void BubbleJson::SetNull()
+void BubbleJson::SetNull(BubbleValue *bubbleValue)
 {
-    MemoryFreeValueString();
+    MemoryFreeValueString(bubbleValue);
 }
 
-bool BubbleJson::GetBoolean()
+bool BubbleJson::GetBoolean(BubbleValue *bubbleValue)
 {
-    assert(this->value->type == ValueType_True || this->value->type == ValueType_False);
-    return this->value->type == ValueType_True;
+    assert(bubbleValue->type == ValueType_True || bubbleValue->type == ValueType_False);
+    return bubbleValue->type == ValueType_True;
 }
 
-void BubbleJson::SetBoolean(int boolean)
+void BubbleJson::SetBoolean(BubbleValue *bubbleValue, int boolean)
 {
-    MemoryFreeValueString();
-    this->value->type = boolean ? ValueType_True : ValueType_False;
+    MemoryFreeValueString(bubbleValue);
+    bubbleValue->type = boolean ? ValueType_True : ValueType_False;
 }
 
-double BubbleJson::GetNumber()
+double BubbleJson::GetNumber(BubbleValue *bubbleValue)
 {
-    assert(this->value->type == ValueType_Number);
-    return this->value->u.number;
+    assert(bubbleValue->type == ValueType_Number);
+    return bubbleValue->u.number;
 }
 
-void BubbleJson::SetNumber(double number)
+void BubbleJson::SetNumber(BubbleValue *bubbleValue, double number)
 {
-    MemoryFreeValueString();
-    this->value->u.number = number;
-    this->value->type = ValueType_Number;
+    MemoryFreeValueString(bubbleValue);
+    bubbleValue->u.number = number;
+    bubbleValue->type = ValueType_Number;
 }
 
-const char * BubbleJson::GetString()
+const char * BubbleJson::GetString(BubbleValue *bubbleValue)
 {
-    assert(this->value->type == ValueType_String
-           && this->value->u.string.literal != nullptr);
-    return this->value->u.string.literal;
+    assert(bubbleValue->type == ValueType_String
+           && bubbleValue->u.string.literal != nullptr);
+    return bubbleValue->u.string.literal;
 }
 
-void BubbleJson::SetString(const char *string, size_t length)
+void BubbleJson::SetString(BubbleValue *bubbleValue, const char *string, size_t length)
 {
     //allow empty string
     assert(string != nullptr || length == 0);
-    MemoryFreeValueString();
-    BubbleValue* v = this->value;
+    MemoryFreeValueString(bubbleValue);
 
-    v->u.string.literal = (char*)malloc(length + 1);//include \0
-    memcpy(v->u.string.literal, string, length);
-    v->u.string.literal[length] = '\0';
-    v->u.string.length = length;
+    bubbleValue->u.string.literal = (char*)malloc(length + 1);//include \0
+    memcpy(bubbleValue->u.string.literal, string, length);
+    bubbleValue->u.string.literal[length] = '\0';
+    bubbleValue->u.string.length = length;
 
-    v->type = ValueType_String;
+    bubbleValue->type = ValueType_String;
 }
 
-size_t BubbleJson::GetStringLength()
+size_t BubbleJson::GetStringLength(BubbleValue *bubbleValue)
 {
-    assert(this->value->type == ValueType_String
-           && this->value->u.string.literal != nullptr);
-    return this->value->u.string.length;
+    assert(bubbleValue->type == ValueType_String
+           && bubbleValue->u.string.literal != nullptr);
+    return bubbleValue->u.string.length;
 }
 
 inline void BubbleJson::BubbleContextPushChar(char ch)
