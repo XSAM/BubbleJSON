@@ -39,8 +39,6 @@ static void TestParseNull()
     auto result = gm_BubbleJson.Parse("null");
     EXPECT_EQ_INT(ParseResult_Ok, get<0>(result));
     EXPECT_EQ_INT(ValueType_Null, get<1>(result)->type);
-    gm_BubbleJson.MemoryFreeValueString(get<1>(result));
-    delete get<1>(result);
 }
 
 static void TestParseTrue()
@@ -48,8 +46,6 @@ static void TestParseTrue()
     auto result = gm_BubbleJson.Parse("true");
     EXPECT_EQ_INT(ParseResult_Ok, get<0>(result));
     EXPECT_EQ_INT(ValueType_True, get<1>(result)->type);
-    gm_BubbleJson.MemoryFreeValueString(get<1>(result));
-    delete get<1>(result);
 }
 
 static void TestParseFalse()
@@ -57,8 +53,6 @@ static void TestParseFalse()
     auto result = gm_BubbleJson.Parse("false");
     EXPECT_EQ_INT(ParseResult_Ok, get<0>(result));
     EXPECT_EQ_INT(ValueType_False, get<1>(result)->type);
-    gm_BubbleJson.MemoryFreeValueString(get<1>(result));
-    delete get<1>(result);
 }
 
 static void TestParseExpectValue()
@@ -66,14 +60,10 @@ static void TestParseExpectValue()
     tuple<ParseResults, BubbleValue*> result = gm_BubbleJson.Parse("");
     EXPECT_EQ_INT(ParseResult_ExpectValue, get<0>(result));
     EXPECT_EQ_INT(ValueType_Null, get<1>(result)->type);
-    gm_BubbleJson.MemoryFreeValueString(get<1>(result));
-    delete get<1>(result);
 
     result = gm_BubbleJson.Parse(" ");
     EXPECT_EQ_INT(ParseResult_ExpectValue, get<0>(result));
     EXPECT_EQ_INT(ValueType_Null, get<1>(result)->type);
-    gm_BubbleJson.MemoryFreeValueString(get<1>(result));
-    delete get<1>(result);
 }
 
 #define TEST_ERROR(error, json)\
@@ -81,8 +71,6 @@ static void TestParseExpectValue()
         result = gm_BubbleJson.Parse(json);\
         EXPECT_EQ_INT(error, get<0>(result));\
         EXPECT_EQ_INT(ValueType_Null, get<1>(result)->type);\
-        gm_BubbleJson.MemoryFreeValueString(get<1>(result));\
-        delete get<1>(result);\
     } while(0)
 
 static void TestParseInvalidValue()
@@ -126,8 +114,6 @@ static void TestParseNumberTooBig()
         EXPECT_EQ_INT(ParseResult_Ok, get<0>(result));\
         EXPECT_EQ_INT(ValueType_Number, get<1>(result)->type);\
         EXPECT_EQ_DOUBLE(expect, get<1>(result)->u.number);\
-        gm_BubbleJson.MemoryFreeValueString(get<1>(result));\
-        delete get<1>(result);\
     } while(0)
 
 static void TestParseNumber() {
@@ -171,8 +157,6 @@ static void TestParseNumber() {
         EXPECT_EQ_INT(ParseResult_Ok, get<0>(result));\
         EXPECT_EQ_INT(ValueType_String, get<1>(result)->type);\
         EXPECT_EQ_STRING(expect, get<1>(result)->u.string.literal, get<1>(result)->u.string.length);\
-        gm_BubbleJson.MemoryFreeValueString(get<1>(result));\
-        delete get<1>(result);\
     } while(0)
 
 static void TestParseString()

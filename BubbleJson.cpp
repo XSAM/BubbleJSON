@@ -20,12 +20,14 @@ BubbleJson::BubbleJson()
 BubbleJson::~BubbleJson()
 {
     delete this->context;
+    MemoryFreeValueString(this->value);
     delete this->value;
 }
 
 tuple<ParseResults, BubbleValue *> BubbleJson::Parse(const char *json)
 {
-    BubbleValue* bubbleValue = new BubbleValue();
+    BubbleValue* bubbleValue = this->value;
+    MemoryFreeValueString(bubbleValue);
     InitBubbleValue(bubbleValue);
     MemoryFreeContextStack();
 
