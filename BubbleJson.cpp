@@ -14,22 +14,18 @@ using namespace bubbleJson;
 BubbleJson::BubbleJson()
 {
     this->context = new BubbleContext();
-    this->value = new BubbleValue();
 }
 
 BubbleJson::~BubbleJson()
 {
     MemoryFreeContextStack();
     delete this->context;
-    MemoryFreeBubbleValue(this->value);
-    delete this->value;
 }
 
 tuple<ParseResults, BubbleValue *> BubbleJson::Parse(const char *json)
 {
-    BubbleValue* bubbleValue = this->value;
-    MemoryFreeBubbleValue(bubbleValue);
-    InitBubbleValue(bubbleValue);
+    BubbleValue* bubbleValue = new BubbleValue();
+    bubbleValue->isRoot = true;
     MemoryFreeContextStack();
 
     this->context->json = json;
@@ -346,13 +342,18 @@ ParseResults BubbleJson::ParseArray(BubbleValue *bubbleValue)
     while (true)
     {
         BubbleValue valueTmp;
-        InitBubbleValue(&valueTmp);
         if ((result = ParseValue(&valueTmp)) != ParseResult_Ok)
-            return result;
+            break;
         count++;
         memcpy(BubbleContextPush(sizeof(valueTmp)), &valueTmp, sizeof(valueTmp));
         ParseWhitespace();
-        if (*c->json == ']')
+        if (*c->json == ',')
+        {
+            c->json++;
+            ParseWhitespace();
+
+        }
+        else if (*c->json == ']')
         {
             c->json++;
             bubbleValue->type = ValueType_Array;
@@ -361,14 +362,20 @@ ParseResults BubbleJson::ParseArray(BubbleValue *bubbleValue)
             memcpy(bubbleValue->u.array.elements = (BubbleValue*)malloc(size), BubbleContextPop(size), size);
             return ParseResult_Ok;
         }
-        else if (*c->json == ',')
-        {
-            c->json++;
-            ParseWhitespace();
-        }
         else
-            return ParseResult_MissCommaOrSquareBracket;
+        {
+            result = ParseResult_MissCommaOrSquareBracket;
+            break;
+        }
+            
     }
+    BubbleValue* tmp;
+    for (int i = 0; i < count; ++i)
+    {
+        tmp = (BubbleValue*)BubbleContextPop(sizeof(BubbleValue));
+        tmp->MemoryFreeValue();
+    }
+    return result;
 }
 
 

@@ -10,15 +10,17 @@ using namespace bubbleJson;
 BubbleValue::BubbleValue()
 {
     this->type = ValueType_Null;
+    this->isRoot = false;
 }
 
 BubbleValue::~BubbleValue()
 {
-#warning need uncomment
-    //MemoryFreeBubbleValue();
+    //only root can invoke MemoryFreeValue while destruct
+    if (this->isRoot)
+        MemoryFreeValue();
 }
 
-void BubbleValue::MemoryFreeBubbleValue()
+void BubbleValue::MemoryFreeValue()
 {
     switch (this->type)
     {
@@ -29,7 +31,7 @@ void BubbleValue::MemoryFreeBubbleValue()
         case ValueType_Array:
             for (int i = 0; i < this->u.array.count; ++i)
             {
-                this->u.array.elements[i].MemoryFreeBubbleValue();
+                this->u.array.elements[i].MemoryFreeValue();
             }
             free(this->u.array.elements);
             this->u.array.elements = nullptr;
@@ -48,12 +50,12 @@ ValueTypes BubbleValue::GetType()
 
 void BubbleValue::SetNull()
 {
-    MemoryFreeBubbleValue();
+    MemoryFreeValue();
 }
 
 void BubbleValue::SetBoolean(bool boolean)
 {
-    MemoryFreeBubbleValue();
+    MemoryFreeValue();
     this->type = boolean ? ValueType_True : ValueType_False;
 }
 
@@ -65,7 +67,7 @@ bool BubbleValue::GetBoolean()
 
 void BubbleValue::SetNumber(double number)
 {
-    MemoryFreeBubbleValue();
+    MemoryFreeValue();
     this->u.number = number;
     this->type = ValueType_Number;
 }
@@ -80,7 +82,7 @@ void BubbleValue::SetString(const char *string, size_t length)
 {
     //allow empty string
     assert(string != nullptr || length == 0);
-    MemoryFreeBubbleValue();
+    MemoryFreeValue();
 
     this->u.string.literal = (char*)malloc(length + 1);
     memcpy(this->u.string.literal, string, length);

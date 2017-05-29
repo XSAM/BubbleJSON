@@ -26,7 +26,6 @@ public:
     ~BubbleJson();
 private:
     BubbleContext* context;
-    BubbleValue* value;
     const size_t stackInitSize = 256;
     void InitBubbleValue(BubbleValue *bubbleValue);
 
@@ -41,7 +40,7 @@ private:
     void EncodeUTF8(unsigned number);
 
     void MemoryFreeContextStack();
-private:
+
     void BubbleContextPushChar(char ch);
     void* BubbleContextPush(size_t size);
     void* BubbleContextPop(size_t size);

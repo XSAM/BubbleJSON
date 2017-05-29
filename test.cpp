@@ -45,6 +45,7 @@ static void TestParseNull()
     auto result = gm_BubbleJson.Parse("null");
     EXPECT_EQ_INT(ParseResult_Ok, get<0>(result));
     EXPECT_EQ_INT(ValueType_Null, get<1>(result)->GetType());
+    delete get<1>(result);\
 }
 
 static void TestParseTrue()
@@ -52,6 +53,7 @@ static void TestParseTrue()
     auto result = gm_BubbleJson.Parse("true");
     EXPECT_EQ_INT(ParseResult_Ok, get<0>(result));
     EXPECT_EQ_INT(ValueType_True, get<1>(result)->GetType());
+    delete get<1>(result);\
 }
 
 static void TestParseFalse()
@@ -59,6 +61,7 @@ static void TestParseFalse()
     auto result = gm_BubbleJson.Parse("false");
     EXPECT_EQ_INT(ParseResult_Ok, get<0>(result));
     EXPECT_EQ_INT(ValueType_False, get<1>(result)->GetType());
+    delete get<1>(result);\
 }
 
 static void TestParseExpectValue()
@@ -66,10 +69,12 @@ static void TestParseExpectValue()
     tuple<ParseResults, BubbleValue*> result = gm_BubbleJson.Parse("");
     EXPECT_EQ_INT(ParseResult_ExpectValue, get<0>(result));
     EXPECT_EQ_INT(ValueType_Null, get<1>(result)->GetType());
+    delete get<1>(result);\
 
     result = gm_BubbleJson.Parse(" ");
     EXPECT_EQ_INT(ParseResult_ExpectValue, get<0>(result));
     EXPECT_EQ_INT(ValueType_Null, get<1>(result)->GetType());
+    delete get<1>(result);\
 }
 
 #define TEST_ERROR(error, json)\
@@ -77,6 +82,7 @@ static void TestParseExpectValue()
         result = gm_BubbleJson.Parse(json);\
         EXPECT_EQ_INT(error, get<0>(result));\
         EXPECT_EQ_INT(ValueType_Null, get<1>(result)->GetType());\
+        delete get<1>(result);\
     } while(0)
 
 static void TestParseInvalidValue()
@@ -123,6 +129,7 @@ static void TestParseNumberTooBig()
         EXPECT_EQ_INT(ParseResult_Ok, get<0>(result));\
         EXPECT_EQ_INT(ValueType_Number, get<1>(result)->GetType());\
         EXPECT_EQ_DOUBLE(expect, get<1>(result)->GetNumber());\
+        delete get<1>(result);\
     } while(0)
 
 static void TestParseNumber() {
@@ -168,6 +175,7 @@ static void TestParseNumber() {
         EXPECT_EQ_INT(ParseResult_Ok, get<0>(result));\
         EXPECT_EQ_INT(ValueType_String, get<1>(result)->GetType());\
         EXPECT_EQ_STRING(expect, get<1>(result)->GetString(), get<1>(result)->GetStringLength());\
+        delete get<1>(result);\
     } while(0)
 
 static void TestParseString()
@@ -251,6 +259,7 @@ static void TestParseArray()
     EXPECT_EQ_INT(ParseResult_Ok, get<0>(result));
     EXPECT_EQ_INT(ValueType_Array, get<1>(result)->GetType());
     EXPECT_EQ_SIZE_T(0, get<1>(result)->GetArrayCount());
+    delete get<1>(result);
 
     result = gm_BubbleJson.Parse("[ null , false , true , 123 , \"abc\" ]");
     value = get<1>(result);
@@ -266,7 +275,7 @@ static void TestParseArray()
 
     EXPECT_EQ_DOUBLE(123.0, value->GetArrayElement(3)->GetNumber());
     EXPECT_EQ_STRING("abc", value->GetArrayElement(4)->GetString(), value->GetArrayElement(4)->GetStringLength());
-
+    delete value;
 
     result = gm_BubbleJson.Parse("[ [ ] , [ 0 ] , [ 0 , 1 ] , [ 0 , 1 , 2 ] ]");
     value = get<1>(result);
@@ -285,6 +294,7 @@ static void TestParseArray()
             EXPECT_EQ_DOUBLE((double)j, valueLevel3->GetNumber());
         }
     }
+    delete value;
 }
 
 static void TestParseMissCommaOrSquareBracket()

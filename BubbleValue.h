@@ -13,6 +13,7 @@ namespace bubbleJson {
 class BubbleValue
 {
 private:
+    bool isRoot;//only root can invoke MemoryFreeValue while destruct
     union
     {
         double number;
@@ -32,7 +33,7 @@ public:
     friend class BubbleJson;
     BubbleValue();
     ~BubbleValue();
-    void MemoryFreeBubbleValue();
+    void MemoryFreeValue();
 
     ValueTypes GetType();
 
