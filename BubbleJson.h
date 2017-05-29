@@ -19,7 +19,7 @@ class BubbleJson
 public:
     BubbleJson();
     tuple<ParseResults, BubbleValue *> Parse(const char *json);
-    void MemoryFreeValueString(BubbleValue *bubbleValue);
+    void MemoryFreeBubbleValue(BubbleValue *bubbleValue);
     ~BubbleJson();
 private:
     BubbleContext* context;
@@ -32,11 +32,14 @@ private:
     ParseResults ParseValue(BubbleValue *bubbleValue);
     ParseResults ParseNumber(BubbleValue *bubbleValue);
     ParseResults ParseString(BubbleValue *bubbleValue);
+    ParseResults ParseArray(BubbleValue *bubbleValue);
     ParseResults ParseLiteral(BubbleValue *bubbleValue, const char *expectJson, ValueTypes expectResult);
     const char * ParseHexToInt(const char *ch, unsigned *number);
     void EncodeUTF8(unsigned number);
 
     void MemoryFreeContextStack();
+public:
+#warning actuall it is private
     void SetNull(BubbleValue *bubbleValue);
     bool GetBoolean(BubbleValue *bubbleValue);
     void SetBoolean(BubbleValue *bubbleValue, int boolean);
@@ -45,6 +48,8 @@ private:
     const char *GetString(BubbleValue *bubbleValue);
     void SetString(BubbleValue *bubbleValue, const char *string, size_t length);
     size_t GetStringLength(BubbleValue *bubbleValue);
+    size_t GetArraySize(const BubbleValue *bubbleValue);
+    BubbleValue* GetArrayElement(const BubbleValue *bubbleValue, size_t index);
 
     void BubbleContextPushChar(char ch);
     void* BubbleContextPush(size_t size);

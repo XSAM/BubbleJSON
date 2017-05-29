@@ -34,6 +34,12 @@ static BubbleJson gm_BubbleJson;
 #define EXPECT_EQ_STRING(expect, actual, alength) \
     EXPECT_EQ_BASE(sizeof(expect) - 1 == alength && memcmp(expect, actual, alength) == 0, expect, actual, "%s")
 
+#if defined(_MSC_VER)
+#define EXPECT_EQ_SIZE_T(expect, actual) EXPECT_EQ_BASE((expect) == (actual), (size_t)expect, (size_t)actual, "%Iu")
+#else
+#define EXPECT_EQ_SIZE_T(expect, actual) EXPECT_EQ_BASE((expect) == (actual), (size_t)expect, (size_t)actual, "%zu")
+#endif
+
 static void TestParseNull()
 {
     auto result = gm_BubbleJson.Parse("null");
@@ -86,6 +92,10 @@ static void TestParseInvalidValue()
     TEST_ERROR(ParseResult_InvalidValue, ".123");
     TEST_ERROR(ParseResult_InvalidValue, "0.");
     TEST_ERROR(ParseResult_InvalidValue, "INF");
+
+    //invalid value in array
+    TEST_ERROR(ParseResult_InvalidValue, "[1,]");
+    TEST_ERROR(ParseResult_InvalidValue, "[\"a\", nul]");
 }
 
 static void TestParseRootNotSingular()
@@ -103,7 +113,6 @@ static void TestParseNumberTooBig()
 {
     tuple<ParseResults, BubbleValue*> result;
 
-    TEST_ERROR(ParseResult_NumberTooBig, "2e200");
     TEST_ERROR(ParseResult_NumberTooBig, "1E309");
     TEST_ERROR(ParseResult_NumberTooBig, "-1E309");
 }
@@ -149,6 +158,8 @@ static void TestParseNumber() {
     TEST_NUMBER(-2.2250738585072014e-308, "-2.2250738585072014e-308");
     TEST_NUMBER( 1.7976931348623157e+308, "1.7976931348623157e+308");  /* Max double */
     TEST_NUMBER(-1.7976931348623157e+308, "-1.7976931348623157e+308");
+
+    TEST_NUMBER(2e200, "2e200");
 }
 
 #define TEST_STRING(expect, json)\
@@ -232,7 +243,59 @@ static void TestParseInvalidStringChar()
     TEST_ERROR(ParseResult_InvalidStringChar, "\"\x1");
 }
 
+static void TestParseArray()
+{
+    tuple<ParseResults, BubbleValue*> result;
+    BubbleValue *value;
+    result = gm_BubbleJson.Parse("[ ]");
+    EXPECT_EQ_INT(ParseResult_Ok, get<0>(result));
+    EXPECT_EQ_INT(ValueType_Array, get<1>(result)->type);
+    EXPECT_EQ_SIZE_T(0, get<1>(result)->u.array.count);
 
+    result = gm_BubbleJson.Parse("[ null , false , true , 123 , \"abc\" ]");
+    value = get<1>(result);
+    EXPECT_EQ_INT(ParseResult_Ok, get<0>(result));
+    EXPECT_EQ_INT(ValueType_Array, get<1>(result)->type);
+    EXPECT_EQ_SIZE_T(5, get<1>(result)->u.array.count);
+
+    EXPECT_EQ_INT(ValueType_Null, gm_BubbleJson.GetArrayElement(value, 0)->type);
+    EXPECT_EQ_INT(ValueType_False, gm_BubbleJson.GetArrayElement(value, 1)->type);
+    EXPECT_EQ_INT(ValueType_True, gm_BubbleJson.GetArrayElement(value, 2)->type);
+    EXPECT_EQ_INT(ValueType_Number, gm_BubbleJson.GetArrayElement(value, 3)->type);
+    EXPECT_EQ_INT(ValueType_String, gm_BubbleJson.GetArrayElement(value, 4)->type);
+
+    EXPECT_EQ_DOUBLE(123.0, gm_BubbleJson.GetArrayElement(value, 3)->u.number);
+    EXPECT_EQ_STRING("abc", gm_BubbleJson.GetArrayElement(value, 4)->u.string.literal, gm_BubbleJson.GetArrayElement(value, 4)->u.string.length);
+
+
+    result = gm_BubbleJson.Parse("[ [ ] , [ 0 ] , [ 0 , 1 ] , [ 0 , 1 , 2 ] ]");
+    value = get<1>(result);
+    EXPECT_EQ_INT(ParseResult_Ok, get<0>(result));
+    EXPECT_EQ_INT(ValueType_Array, get<1>(result)->type);
+    EXPECT_EQ_SIZE_T(4, get<1>(result)->u.array.count);
+    for (int i = 0; i < 4; ++i)
+    {
+        BubbleValue* valueLevel2 = gm_BubbleJson.GetArrayElement(value, i);
+        EXPECT_EQ_INT(ValueType_Array, valueLevel2->type);
+        EXPECT_EQ_SIZE_T(i, valueLevel2->u.array.count);
+        for (int j = 0; j < i; ++j)
+        {
+            BubbleValue* valueLevel3 = gm_BubbleJson.GetArrayElement(valueLevel2, j);
+            EXPECT_EQ_INT(ValueType_Number, valueLevel3->type);
+            EXPECT_EQ_DOUBLE((double)j, valueLevel3->u.number);
+        }
+    }
+}
+
+static void TestParseMissCommaOrSquareBracket()
+{
+    tuple<ParseResults, BubbleValue*> result;
+
+    TEST_ERROR(ParseResult_MissCommaOrSquareBracket, "[1");
+    TEST_ERROR(ParseResult_MissCommaOrSquareBracket, "[1}");
+    TEST_ERROR(ParseResult_MissCommaOrSquareBracket, "[1 2}");
+    TEST_ERROR(ParseResult_MissCommaOrSquareBracket, "[[1]");
+}
 
 static void TestParse()
 {
@@ -243,11 +306,15 @@ static void TestParse()
     TestParseInvalidValue();
     TestParseRootNotSingular();
     TestParseNumber();
+    TestParseNumberTooBig();
     TestParseString();
     TestParseMissingQuotationMark();
     TestParseInvalidStringEscape();
     TestParseInvalidStringChar();
     TestParseInvalidUnicodeHex();
+    TestParseInvalidUnicodeSurrogate();
+    TestParseArray();
+    TestParseMissCommaOrSquareBracket();
 }
 
 int main()

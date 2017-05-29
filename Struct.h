@@ -7,6 +7,8 @@
 
 
 #include <cstdio>
+#include <cstring>
+#include <cstdlib>
 
 namespace bubbleJson {
 
@@ -21,7 +23,8 @@ enum ParseResults
     ParseResult_InvalidStringEscape,
     ParseResult_MissQuotationMark,
     ParseResult_InvalidUnicodeHex,
-    ParseResult_InvalidUnicodeSurrogate
+    ParseResult_InvalidUnicodeSurrogate,
+    ParseResult_MissCommaOrSquareBracket
 };
 
 enum ValueTypes
@@ -32,7 +35,7 @@ enum ValueTypes
     ValueType_Number,
     ValueType_String,
     ValueType_Array,
-    ValueType_Object
+    ValueType_Object,
 };
 
 struct BubbleContext
@@ -47,7 +50,8 @@ struct BubbleValue
     union
     {
         double number;
-        struct { char* literal; size_t length;} string;
+        struct { char* literal; size_t length; } string;
+        struct { BubbleValue* elements; size_t count; } array;
     }u;
     ValueTypes type;
 };
