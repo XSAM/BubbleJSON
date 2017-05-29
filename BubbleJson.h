@@ -5,14 +5,17 @@
 #ifndef BUBBLEJSON_BUBBLEJSON_H
 #define BUBBLEJSON_BUBBLEJSON_H
 
-#include "Struct.h"
 #include <utility>
 #include <tuple>
 #include <cassert>
+#include "Struct.h"
+#include "BubbleValue.h"
 
 using namespace std;
 
 namespace bubbleJson {
+
+    class BubbleValue;
 
 class BubbleJson
 {
@@ -38,19 +41,7 @@ private:
     void EncodeUTF8(unsigned number);
 
     void MemoryFreeContextStack();
-public:
-#warning actuall it is private
-    void SetNull(BubbleValue *bubbleValue);
-    bool GetBoolean(BubbleValue *bubbleValue);
-    void SetBoolean(BubbleValue *bubbleValue, int boolean);
-    double GetNumber(BubbleValue *bubbleValue);
-    void SetNumber(BubbleValue *bubbleValue, double number);
-    const char *GetString(BubbleValue *bubbleValue);
-    void SetString(BubbleValue *bubbleValue, const char *string, size_t length);
-    size_t GetStringLength(BubbleValue *bubbleValue);
-    size_t GetArraySize(const BubbleValue *bubbleValue);
-    BubbleValue* GetArrayElement(const BubbleValue *bubbleValue, size_t index);
-
+private:
     void BubbleContextPushChar(char ch);
     void* BubbleContextPush(size_t size);
     void* BubbleContextPop(size_t size);

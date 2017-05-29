@@ -45,17 +45,6 @@ struct BubbleContext
     size_t size, top;
 };
 
-struct BubbleValue
-{
-    union
-    {
-        double number;
-        struct { char* literal; size_t length; } string;
-        struct { BubbleValue* elements; size_t count; } array;
-    }u;
-    ValueTypes type;
-};
-
 }
 
 
