@@ -22,19 +22,19 @@ class BubbleJson
 public:
     BubbleJson();
     tuple<ParseResults, BubbleValue *> Parse(const char *json);
-    void MemoryFreeBubbleValue(BubbleValue *bubbleValue);
     ~BubbleJson();
 private:
     BubbleContext* context;
     const size_t stackInitSize = 256;
-    void InitBubbleValue(BubbleValue *bubbleValue);
 
     void Expect(const char expectChar);
     void ParseWhitespace();
     ParseResults ParseValue(BubbleValue *bubbleValue);
     ParseResults ParseNumber(BubbleValue *bubbleValue);
+    ParseResults ParseStringRaw(char **refString, size_t *refLength);//a pointer point a char* pointer
     ParseResults ParseString(BubbleValue *bubbleValue);
     ParseResults ParseArray(BubbleValue *bubbleValue);
+    ParseResults ParseObject(BubbleValue *bubbleValue);
     ParseResults ParseLiteral(BubbleValue *bubbleValue, const char *expectJson, ValueTypes expectResult);
     const char * ParseHexToInt(const char *ch, unsigned *number);
     void EncodeUTF8(unsigned number);

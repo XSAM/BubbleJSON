@@ -36,6 +36,13 @@ void BubbleValue::MemoryFreeValue()
             free(this->u.array.elements);
             this->u.array.elements = nullptr;
             break;
+        case ValueType_Object:
+            for (int i = 0; i < this->u.object.count; ++i)
+            {
+                this->u.object.member[i].MemoryFreeAll();
+            }
+            free(this->u.object.member);
+            this->u.object.member = nullptr;
         default:
             break;
     }
@@ -116,4 +123,37 @@ size_t BubbleValue::GetArrayCount()
 {
     assert(this->type == ValueType_Array);
     return this->u.array.count;
+}
+
+size_t BubbleValue::GetObjectCount()
+{
+    assert(this->type == ValueType_Object);
+    return this->u.object.count;
+}
+
+const char *BubbleValue::GetObjectKey(size_t index)
+{
+    assert(this->type == ValueType_Object
+           && index < this->u.object.count);
+    return this->u.object.member[index].key;
+}
+
+size_t BubbleValue::GetObjectKeyLength(size_t index)
+{
+    assert(this->type == ValueType_Object
+           && index < this->u.object.count);
+    return this->u.object.member[index].keyLength;
+}
+
+BubbleValue *BubbleValue::GetObjectValue(size_t index)
+{
+    assert(this->type == ValueType_Object
+           && index < this->u.object.count);
+    return this->u.object.member[index].value;
+}
+
+BubbleMember* BubbleValue::GetObjects()
+{
+    assert(this->type == ValueType_Object);
+    return this->u.object.member;
 }

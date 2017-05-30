@@ -4,6 +4,7 @@
 
 #include "BubbleJson.h"
 #include "Struct.h"
+#include "BubbleValue.h"
 #include <cerrno>
 #include <cmath>
 #include <cstring>
@@ -42,11 +43,6 @@ tuple<ParseResults, BubbleValue *> BubbleJson::Parse(const char *json)
         }
     }
     return make_pair(result, bubbleValue);
-}
-
-inline void BubbleJson::InitBubbleValue(BubbleValue *bubbleValue)
-{
-    bubbleValue->type = ValueType_Null;
 }
 
 inline void BubbleJson::Expect(const char expectChar)
@@ -106,7 +102,7 @@ ParseResults BubbleJson::ParseNumber(BubbleValue *bubbleValue)
     return ParseResult_Ok;
 }
 
-ParseResults BubbleJson::ParseString(BubbleValue *bubbleValue)
+ParseResults BubbleJson::ParseStringRaw(char **refString, size_t *refLength)
 {
     BubbleContext* c = this->context;
     size_t originTop = c->top;
@@ -129,7 +125,8 @@ ParseResults BubbleJson::ParseString(BubbleValue *bubbleValue)
         {
             case '\"':
                 lenght = c->top - originTop;
-                bubbleValue->SetString((const char *) BubbleContextPop(lenght), lenght);
+                *refString = (char *) BubbleContextPop(lenght);
+                *refLength = lenght;
                 //current p point '\"' character
                 c->json = p;
                 return ParseResult_Ok;
@@ -179,6 +176,16 @@ ParseResults BubbleJson::ParseString(BubbleValue *bubbleValue)
     }
 }
 
+ParseResults BubbleJson::ParseString(BubbleValue *bubbleValue)
+{
+    ParseResults result;
+    char* string;
+    size_t length;
+    if ((result = ParseStringRaw(&string, &length)) == ParseResult_Ok)
+        bubbleValue->SetString(string, length);
+    return result;
+}
+
 ParseResults BubbleJson::ParseValue(BubbleValue *bubbleValue)
 {
     switch (*this->context->json)
@@ -188,6 +195,7 @@ ParseResults BubbleJson::ParseValue(BubbleValue *bubbleValue)
         case 'n':   return ParseLiteral(bubbleValue, "null", ValueType_Null);
         case '\"':  return ParseString(bubbleValue);
         case '[':   return ParseArray(bubbleValue);
+        case '{':   return ParseObject(bubbleValue);
         case '\0':  return ParseResult_ExpectValue;
         default:
             return ParseNumber(bubbleValue);
@@ -209,30 +217,6 @@ ParseResults BubbleJson::ParseLiteral(BubbleValue *bubbleValue, const char *expe
     this->context->json += i;
     bubbleValue->type = expectResult;
     return ParseResult_Ok;
-}
-
-void BubbleJson::MemoryFreeBubbleValue(BubbleValue *bubbleValue)
-{
-    assert(bubbleValue != nullptr);
-    switch (bubbleValue->type)
-    {
-        case ValueType_String:
-            free(bubbleValue->u.string.literal);
-            bubbleValue->u.string.literal = nullptr;
-            break;
-        case ValueType_Array:
-            for (int i = 0; i < bubbleValue->u.array.count; ++i)
-            {
-                MemoryFreeBubbleValue(&bubbleValue->u.array.elements[i]);
-            }
-            free(bubbleValue->u.array.elements);
-            bubbleValue->u.array.elements = nullptr;
-            break;
-        default:
-            break;
-    }
-
-    bubbleValue->type = ValueType_Null;
 }
 
 void BubbleJson::MemoryFreeContextStack()
@@ -378,5 +362,85 @@ ParseResults BubbleJson::ParseArray(BubbleValue *bubbleValue)
     return result;
 }
 
+ParseResults BubbleJson::ParseObject(BubbleValue *bubbleValue)
+{
+    BubbleContext* c = this->context;
+    ParseResults result;
+    size_t count = 0;
 
+    Expect('{');
+    ParseWhitespace();
+    if (*c->json == '}')
+    {
+        bubbleValue->type = ValueType_Object;
+        bubbleValue->u.object.count = 0;
+        bubbleValue->u.object.member = nullptr;
+        c->json++;
+        return ParseResult_Ok;
+    }
+    while (true)
+    {
+        BubbleMember memberTmp;
+        char* string;
+        size_t length;
+
+        if (*c->json != '"')
+        {
+            result = ParseResult_MissKey;
+            break;
+        }
+        if ((result = ParseStringRaw(&string, &length)) != ParseResult_Ok)
+            break;
+
+        memberTmp.SetKey(string, length);
+        //memberTmp.SetKey(string, length);
+        ParseWhitespace();
+        if (*c->json == ':')
+        {
+            c->json++;
+            ParseWhitespace();
+        }
+        else
+        {
+            result = ParseResult_MissColon;
+            break;
+        }
+
+        if ((result = ParseValue(memberTmp.value)) != ParseResult_Ok)
+            break;
+        //ownership is transferred to member on stack
+        //but the memory alloc by member still in the heap, referred by member on stack
+        //shouldn't free this memory
+        memcpy(BubbleContextPush(sizeof(BubbleMember)), &memberTmp, sizeof(BubbleMember));
+        count++;
+
+        ParseWhitespace();
+        if (*c->json == ',')
+        {
+            c->json++;
+            ParseWhitespace();
+        }
+        else if (*c->json == '}')
+        {
+            c->json++;
+            size_t size = sizeof(BubbleMember) * count;
+            bubbleValue->type = ValueType_Object;
+            bubbleValue->u.object.count = count;
+            memcpy(bubbleValue->u.object.member = (BubbleMember*)malloc(size), BubbleContextPop(size), size);
+            return ParseResult_Ok;
+        }
+        else
+        {
+            result = ParseResult_MissCommaOrCurlyBracket;
+            break;
+        }
+    }
+    BubbleMember* tmp;
+    for (int i = 0; i < count; ++i)
+    {
+        tmp = (BubbleMember*)BubbleContextPop(sizeof(BubbleValue));
+        tmp->MemoryFreeAll();
+    }
+    return result;
+}
 

@@ -52,6 +52,7 @@ public:
     const char* GetObjectKey(size_t index);
     size_t GetObjectKeyLength(size_t index);
     BubbleValue* GetObjectValue(size_t index);
+    BubbleMember* GetObjects();
 };
 
 }

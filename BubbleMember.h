@@ -17,9 +17,19 @@ private:
     char* key;
     size_t keyLength;
     BubbleValue* value;
+
+    void MemoryFreeKey();
+    void MemoryFreeAll();
 public:
     friend class BubbleJson;
     friend class BubbleValue;
+    BubbleMember();
+    ~BubbleMember();
+
+    void SetKey(const char* string, size_t length);
+    const char* GetKey();
+    size_t GetKeyLength();
+    BubbleValue* GetValue();
 };
 
 }

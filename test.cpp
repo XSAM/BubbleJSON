@@ -4,6 +4,7 @@
 
 #include <iostream>
 #include <cassert>
+#include <string>
 #include <cstring>
 #include "BubbleJson.h"
 #include "Struct.h"
@@ -31,6 +32,7 @@ static BubbleJson gm_BubbleJson;
 
 #define EXPECT_EQ_INT(expect, actual) EXPECT_EQ_BASE((expect) == (actual), expect, actual, "%d")
 #define EXPECT_EQ_DOUBLE(expect, actual) EXPECT_EQ_BASE((expect) == (actual), expect, actual, "%.17g")
+#define EXPECT_TRUE(actual) EXPECT_EQ_BASE((actual) != 0, "true", "false", "%s")
 #define EXPECT_EQ_STRING(expect, actual, alength) \
     EXPECT_EQ_BASE(sizeof(expect) - 1 == alength && memcmp(expect, actual, alength) == 0, expect, actual, "%s")
 
@@ -307,6 +309,74 @@ static void TestParseMissCommaOrSquareBracket()
     TEST_ERROR(ParseResult_MissCommaOrSquareBracket, "[[1]");
 }
 
+static void TestParseObject()
+{
+    tuple<ParseResults, BubbleValue*> result;
+    BubbleValue *value;
+    result = gm_BubbleJson.Parse("{ }");
+    value = get<1>(result);
+    EXPECT_EQ_INT(ParseResult_Ok, get<0>(result));
+    EXPECT_EQ_INT(ValueType_Object, value->GetType());
+    EXPECT_EQ_SIZE_T(0, value->GetObjectCount());
+    delete value;
+
+    result = gm_BubbleJson.Parse(
+            " { "
+            "\"n\" : null , "
+            "\"f\" : false , "
+            "\"t\" : true , "
+            "\"i\" : 123 , "
+            "\"s\" : \"abc\", "
+            "\"a\" : [ 1, 2, 3 ],"
+            "\"o\" : { \"1\" : 1, \"2\" : 2, \"3\" : 3 }"
+            " } "
+    );
+    value = get<1>(result);
+    EXPECT_EQ_INT(ParseResult_Ok, get<0>(result));
+    EXPECT_EQ_INT(ValueType_Object, value->GetType());
+    EXPECT_EQ_SIZE_T(7, value->GetObjectCount());
+
+    EXPECT_EQ_STRING("n", value->GetObjectKey(0), value->GetObjectKeyLength(0));
+    EXPECT_EQ_INT(ValueType_Null, value->GetObjectValue(0)->GetType());
+    EXPECT_EQ_STRING("f", value->GetObjectKey(1), value->GetObjectKeyLength(1));
+    EXPECT_EQ_INT(ValueType_False, value->GetObjectValue(1)->GetType());
+    EXPECT_EQ_STRING("t", value->GetObjectKey(2), value->GetObjectKeyLength(2));
+    EXPECT_EQ_INT(ValueType_True, value->GetObjectValue(2)->GetType());
+
+    EXPECT_EQ_STRING("i", value->GetObjectKey(3), value->GetObjectKeyLength(3));
+    EXPECT_EQ_INT(ValueType_Number, value->GetObjectValue(3)->GetType());
+    EXPECT_EQ_DOUBLE(123.0, value->GetObjectValue(3)->GetNumber());
+
+    EXPECT_EQ_STRING("s", value->GetObjectKey(4), value->GetObjectKeyLength(4));
+    EXPECT_EQ_INT(ValueType_String, value->GetObjectValue(4)->GetType());
+    EXPECT_EQ_STRING("abc", value->GetObjectValue(4)->GetString(), value->GetObjectValue(4)->GetStringLength());
+
+    EXPECT_EQ_STRING("a", value->GetObjectKey(5), value->GetObjectKeyLength(5));
+    EXPECT_EQ_INT(ValueType_Array, value->GetObjectValue(5)->GetType());
+    EXPECT_EQ_SIZE_T(3, value->GetObjectValue(5)->GetArrayCount());
+    for (int i = 0; i < 3; ++i)
+    {
+        BubbleValue* valueLevel2 = value->GetObjectValue(5)->GetArrayElement(i);
+        EXPECT_EQ_INT(ValueType_Number, valueLevel2->GetType());
+        EXPECT_EQ_DOUBLE(i + 1.0, valueLevel2->GetNumber());
+    }
+
+    EXPECT_EQ_STRING("o", value->GetObjectKey(6), value->GetObjectKeyLength(6));
+    EXPECT_EQ_INT(ValueType_Object, value->GetObjectValue(6)->GetType());
+    EXPECT_EQ_SIZE_T(3, value->GetObjectValue(6)->GetObjectCount());
+    BubbleValue* valueLevel2 = value->GetObjectValue(6);
+    BubbleMember* members = valueLevel2->GetObjects();
+    for (int i = 0; i < 3; ++i)
+    {
+        EXPECT_TRUE('1'+i == members[i].GetKey()[0]);//magic test
+        EXPECT_EQ_SIZE_T(1, members[i].GetKeyLength());
+        EXPECT_EQ_INT(ValueType_Number, members[i].GetValue()->GetType());
+        EXPECT_EQ_DOUBLE(i + 1.0, members[i].GetValue()->GetNumber());
+    }
+
+    delete value;
+}
+
 static void TestParse()
 {
     TestParseNull();
@@ -325,6 +395,7 @@ static void TestParse()
     TestParseInvalidUnicodeSurrogate();
     TestParseArray();
     TestParseMissCommaOrSquareBracket();
+    TestParseObject();
 }
 
 int main()
