@@ -24,7 +24,10 @@ enum ParseResults
     ParseResult_MissQuotationMark,
     ParseResult_InvalidUnicodeHex,
     ParseResult_InvalidUnicodeSurrogate,
-    ParseResult_MissCommaOrSquareBracket
+    ParseResult_MissCommaOrSquareBracket,
+    ParseResult_MissKey,
+    ParseResult_MissColon,
+    ParseResult_MissCommaOrCurlyBracket
 };
 
 enum ValueTypes

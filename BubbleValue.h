@@ -7,8 +7,11 @@
 
 #include <cstdlib>
 #include "Struct.h"
+#include "BubbleMember.h"
 
 namespace bubbleJson {
+
+class BubbleMember;
 
 class BubbleValue
 {
@@ -17,16 +20,9 @@ private:
     union
     {
         double number;
-        struct
-        {
-            char *literal;
-            size_t length;
-        } string;
-        struct
-        {
-            BubbleValue *elements;
-            size_t count;
-        } array;
+        struct { char *literal; size_t length; } string;
+        struct { BubbleValue* elements; size_t count; } array;
+        struct { BubbleMember* member; size_t count; } object;
     } u;
     ValueTypes type;
 public:
@@ -51,6 +47,11 @@ public:
 
     BubbleValue* GetArrayElement(size_t index);
     size_t GetArrayCount();
+
+    size_t GetObjectCount();
+    const char* GetObjectKey(size_t index);
+    size_t GetObjectKeyLength(size_t index);
+    BubbleValue* GetObjectValue(size_t index);
 };
 
 }
