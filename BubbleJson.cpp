@@ -311,15 +311,16 @@ ParseResults BubbleJson::ParseArray(BubbleValue *bubbleValue)
 {
     BubbleContext* c = this->context;
     ParseResults result;
-    size_t count = 0;
 
     Expect('[');
     ParseWhitespace();
+
+    vector<BubbleValue>* elements = new vector<BubbleValue>;
+    bubbleValue->u.array.elements = elements;
+
     if (*c->json == ']')
     {
         bubbleValue->type = ValueType_Array;
-        bubbleValue->u.array.count = 0;
-        bubbleValue->u.array.elements = nullptr;
         c->json++;
         return ParseResult_Ok;
     }
@@ -328,8 +329,9 @@ ParseResults BubbleJson::ParseArray(BubbleValue *bubbleValue)
         BubbleValue valueTmp;
         if ((result = ParseValue(&valueTmp)) != ParseResult_Ok)
             break;
-        count++;
-        memcpy(BubbleContextPush(sizeof(valueTmp)), &valueTmp, sizeof(valueTmp));
+        auto iterator= elements->end();
+        elements->insert(iterator, valueTmp);
+
         ParseWhitespace();
         if (*c->json == ',')
         {
@@ -341,9 +343,6 @@ ParseResults BubbleJson::ParseArray(BubbleValue *bubbleValue)
         {
             c->json++;
             bubbleValue->type = ValueType_Array;
-            bubbleValue->u.array.count = count;
-            size_t size = count * sizeof(BubbleValue);//same size
-            memcpy(bubbleValue->u.array.elements = (BubbleValue*)malloc(size), BubbleContextPop(size), size);
             return ParseResult_Ok;
         }
         else
@@ -354,11 +353,13 @@ ParseResults BubbleJson::ParseArray(BubbleValue *bubbleValue)
             
     }
     BubbleValue* tmp;
+    size_t count = elements->size();
     for (int i = 0; i < count; ++i)
     {
-        tmp = (BubbleValue*)BubbleContextPop(sizeof(BubbleValue));
+        tmp = &elements->at(i);
         tmp->MemoryFreeValue();
     }
+    delete elements;
     return result;
 }
 

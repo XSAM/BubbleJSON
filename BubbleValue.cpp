@@ -29,11 +29,11 @@ void BubbleValue::MemoryFreeValue()
             this->u.string.literal = nullptr;
             break;
         case ValueType_Array:
-            for (int i = 0; i < this->u.array.count; ++i)
+            for (int i = 0; i < this->u.array.elements->size(); ++i)
             {
-                this->u.array.elements[i].MemoryFreeValue();
+                this->u.array.elements->at(i).MemoryFreeValue();
             }
-            free(this->u.array.elements);
+            delete this->u.array.elements;
             this->u.array.elements = nullptr;
             break;
         case ValueType_Object:
@@ -115,14 +115,14 @@ size_t BubbleValue::GetStringLength()
 
 BubbleValue *BubbleValue::GetArrayElement(size_t index)
 {
-    assert(this->type == ValueType_Array && this->u.array.count > index);
-    return &this->u.array.elements[index];
+    assert(this->type == ValueType_Array && this->u.array.elements->size() > index);
+    return &(this->u.array.elements->at(index));
 }
 
 size_t BubbleValue::GetArrayCount()
 {
     assert(this->type == ValueType_Array);
-    return this->u.array.count;
+    return this->u.array.elements->size();
 }
 
 size_t BubbleValue::GetObjectCount()

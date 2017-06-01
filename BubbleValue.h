@@ -6,10 +6,13 @@
 #define BUBBLEJSON_BUBBLEVALUE_H
 
 #include <cstdlib>
+#include <vector>
 #include "Struct.h"
 #include "BubbleMember.h"
 
 namespace bubbleJson {
+
+using namespace std;
 
 class BubbleMember;
 
@@ -21,7 +24,7 @@ private:
     {
         double number;
         struct { char *literal; size_t length; } string;
-        struct { BubbleValue* elements; size_t count; } array;
+        struct { vector<BubbleValue>* elements; } array;
         struct { BubbleMember* member; size_t count; } object;
     } u;
     ValueTypes type;
