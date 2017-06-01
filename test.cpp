@@ -6,6 +6,8 @@
 #include <cassert>
 #include <string>
 #include <cstring>
+#include <thread>
+#include <chrono>
 #include "BubbleJson.h"
 #include "Struct.h"
 
@@ -400,8 +402,14 @@ static void TestParse()
 
 int main()
 {
+	auto start = chrono::high_resolution_clock::now();
+
     TestParse();
     printf("%d/%d (%3.2f%%) passed\n", g_TestPass, g_TestCount, g_TestPass * 100.0 / g_TestCount);
 
+	//this_thread::sleep_for(chrono::seconds(1));
+	auto end = chrono::high_resolution_clock::now();	
+	auto elapsed = chrono::duration_cast<chrono::milliseconds>(end - start);
+	cout<<"elapsed time: "<<elapsed.count()<<" ms"<<endl;
     return g_Result;
 }
