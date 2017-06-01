@@ -260,32 +260,52 @@ static void TestParseArray()
     tuple<ParseResults, BubbleValue*> result;
     BubbleValue *value;
     result = gm_BubbleJson.Parse("[ ]");
+    value = get<1>(result);
     EXPECT_EQ_INT(ParseResult_Ok, get<0>(result));
-    EXPECT_EQ_INT(ValueType_Array, get<1>(result)->GetType());
-    EXPECT_EQ_SIZE_T(0, get<1>(result)->GetArrayCount());
-    delete get<1>(result);
+    EXPECT_EQ_INT(ValueType_Array, value->GetType());
+    EXPECT_EQ_SIZE_T(0, value->GetArrayCount());
+    delete value;
 
     result = gm_BubbleJson.Parse("[ null , false , true , 123 , \"abc\" ]");
     value = get<1>(result);
     EXPECT_EQ_INT(ParseResult_Ok, get<0>(result));
-    EXPECT_EQ_INT(ValueType_Array, get<1>(result)->GetType());
-    EXPECT_EQ_SIZE_T(5, get<1>(result)->GetArrayCount());
+    EXPECT_EQ_INT(ValueType_Array, value->GetType());
+    EXPECT_EQ_SIZE_T(5, value->GetArrayCount());
 
-    EXPECT_EQ_INT(ValueType_Null, value->GetArrayElement(0)->GetType());
-    EXPECT_EQ_INT(ValueType_False, value->GetArrayElement(1)->GetType());
-    EXPECT_EQ_INT(ValueType_True, value->GetArrayElement(2)->GetType());
-    EXPECT_EQ_INT(ValueType_Number, value->GetArrayElement(3)->GetType());
-    EXPECT_EQ_INT(ValueType_String, value->GetArrayElement(4)->GetType());
+    EXPECT_EQ_INT(ValueType_Null, (*value)[0].GetType());
+    EXPECT_EQ_INT(ValueType_False, (*value)[1].GetType());
+    EXPECT_EQ_INT(ValueType_True, (*value)[2].GetType());
+    EXPECT_EQ_INT(ValueType_Number, (*value)[3].GetType());
+    EXPECT_EQ_INT(ValueType_String, (*value)[4].GetType());
 
-    EXPECT_EQ_DOUBLE(123.0, value->GetArrayElement(3)->GetNumber());
-    EXPECT_EQ_STRING("abc", value->GetArrayElement(4)->GetString(), value->GetArrayElement(4)->GetStringLength());
+    EXPECT_EQ_DOUBLE(123.0, (*value)[3].GetNumber());
+    EXPECT_EQ_STRING("abc", (*value)[4].GetString(), (*value)[4].GetStringLength());
     delete value;
 
+    //a good way
     result = gm_BubbleJson.Parse("[ [ ] , [ 0 ] , [ 0 , 1 ] , [ 0 , 1 , 2 ] ]");
     value = get<1>(result);
     EXPECT_EQ_INT(ParseResult_Ok, get<0>(result));
-    EXPECT_EQ_INT(ValueType_Array, get<1>(result)->GetType());
-    EXPECT_EQ_SIZE_T(4, get<1>(result)->GetArrayCount());
+    EXPECT_EQ_INT(ValueType_Array, value->GetType());
+    EXPECT_EQ_SIZE_T(4, value->GetArrayCount());
+    for (int i = 0; i < 4; ++i)
+    {
+        EXPECT_EQ_INT(ValueType_Array, (*value)[i].GetType());
+        EXPECT_EQ_SIZE_T(i, (*value)[i].GetArrayCount());
+        for (int j = 0; j < i; ++j)
+        {
+            EXPECT_EQ_INT(ValueType_Number, (*value)[i][j].GetType());
+            EXPECT_EQ_DOUBLE((double)j, (*value)[i][j].GetNumber());
+        }
+    }
+    delete value;
+
+    //another way
+    result = gm_BubbleJson.Parse("[ [ ] , [ 0 ] , [ 0 , 1 ] , [ 0 , 1 , 2 ] ]");
+    value = get<1>(result);
+    EXPECT_EQ_INT(ParseResult_Ok, get<0>(result));
+    EXPECT_EQ_INT(ValueType_Array, value->GetType());
+    EXPECT_EQ_SIZE_T(4, value->GetArrayCount());
     for (int i = 0; i < 4; ++i)
     {
         BubbleValue* valueLevel2 = value->GetArrayElement(i);

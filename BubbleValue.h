@@ -12,8 +12,6 @@
 
 namespace bubbleJson {
 
-using namespace std;
-
 class BubbleMember;
 
 class BubbleValue
@@ -24,7 +22,7 @@ private:
     {
         double number;
         struct { char *literal; size_t length; } string;
-        struct { vector<BubbleValue>* elements; } array;
+        struct { std::vector<BubbleValue>* elements; } array;
         struct { BubbleMember* member; size_t count; } object;
     } u;
     ValueTypes type;
@@ -56,6 +54,10 @@ public:
     size_t GetObjectKeyLength(size_t index);
     BubbleValue* GetObjectValue(size_t index);
     BubbleMember* GetObjects();
+
+    BubbleValue& operator[](const size_t index);
+    BubbleValue& operator[](const size_t index) const;
+    void operator delete(void *bubbleValue);
 };
 
 }

@@ -11,6 +11,7 @@
 #include <iostream>
 
 using namespace bubbleJson;
+using namespace std;
 
 BubbleJson::BubbleJson()
 {

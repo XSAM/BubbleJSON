@@ -15,9 +15,11 @@ BubbleValue::BubbleValue()
 
 BubbleValue::~BubbleValue()
 {
-    //only root can invoke MemoryFreeValue while destruct
-    if (this->isRoot)
-        MemoryFreeValue();
+    //only delete can invoke MemoryFreeValue while destruct
+    //prevent memory being freed was not allocated
+
+    //if (this->isRoot)
+    //    MemoryFreeValue();
 }
 
 void BubbleValue::MemoryFreeValue()
@@ -156,4 +158,27 @@ BubbleMember* BubbleValue::GetObjects()
 {
     assert(this->type == ValueType_Object);
     return this->u.object.member;
+}
+
+BubbleValue &BubbleValue::operator[](const size_t index)
+{
+    assert(this->type == ValueType_Array
+           && index < this->u.array.elements->size());
+    return this->u.array.elements->at(index);
+}
+
+BubbleValue &BubbleValue::operator[](size_t index) const
+{
+    return (const_cast<BubbleValue*>(this))->operator[](index);
+}
+
+void BubbleValue::operator delete(void *bubbleValue)
+{
+    BubbleValue* value = (BubbleValue*)bubbleValue;
+
+    //only root can free memory
+    if (value->isRoot)
+        value->MemoryFreeValue();
+    //delete value (not void* bubbleValue) will invoke delete operator infinity
+    ::operator delete(bubbleValue);
 }

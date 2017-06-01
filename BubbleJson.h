@@ -11,17 +11,15 @@
 #include "Struct.h"
 #include "BubbleValue.h"
 
-using namespace std;
-
 namespace bubbleJson {
 
-    class BubbleValue;
+class BubbleValue;
 
 class BubbleJson
 {
 public:
     BubbleJson();
-    tuple<ParseResults, BubbleValue *> Parse(const char *json);
+    std::tuple<ParseResults, BubbleValue *> Parse(const char *json);
     ~BubbleJson();
 private:
     BubbleContext* context;

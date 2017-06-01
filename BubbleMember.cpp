@@ -18,8 +18,8 @@ BubbleMember::BubbleMember()
 
 BubbleMember::~BubbleMember()
 {
-    //root value will delete this recursively
-    //delete this->value;
+    //root value will operator delete this recursively
+    //operator delete this->value;
 }
 
 void BubbleMember::SetKey(const char *string, size_t length)
