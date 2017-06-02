@@ -25,6 +25,7 @@ BubbleValue::~BubbleValue()
 
 void BubbleValue::MemoryFreeValue()
 {
+    auto members = this->u.object.members;
     switch (this->type)
     {
         case ValueType_String:
@@ -40,12 +41,13 @@ void BubbleValue::MemoryFreeValue()
             this->u.array.elements = nullptr;
             break;
         case ValueType_Object:
-            for (int i = 0; i < this->u.object.count; ++i)
+            for (auto it = members->begin(); it != members->end(); ++it)
             {
-                this->u.object.member[i].MemoryFreeAll();
+                it->second.MemoryFreeValue();
             }
-            free(this->u.object.member);
-            this->u.object.member = nullptr;
+            delete this->u.object.members;
+            this->u.object.members = nullptr;
+            break;
         default:
             break;
     }
@@ -161,35 +163,20 @@ void BubbleValue::DeleteArrayElementWithIndex(size_t index)
 size_t BubbleValue::GetObjectCount()
 {
     assert(this->type == ValueType_Object);
-    return this->u.object.count;
+    return this->u.object.members->size();
 }
 
-const char *BubbleValue::GetObjectKey(size_t index)
-{
-    assert(this->type == ValueType_Object
-           && index < this->u.object.count);
-    return this->u.object.member[index].key;
-}
-
-size_t BubbleValue::GetObjectKeyLength(size_t index)
-{
-    assert(this->type == ValueType_Object
-           && index < this->u.object.count);
-    return this->u.object.member[index].keyLength;
-}
-
-BubbleValue *BubbleValue::GetObjectValue(size_t index)
-{
-    assert(this->type == ValueType_Object
-           && index < this->u.object.count);
-    return this->u.object.member[index].value;
-}
-
-#warning deprecated
-BubbleMember* BubbleValue::GetObjects()
+BubbleValue * BubbleValue::GetObjectValueWithKey(const char *key)
 {
     assert(this->type == ValueType_Object);
-    return this->u.object.member;
+    auto it = this->u.object.members->find(key);
+    return it != this->u.object.members->end() ? &it->second : nullptr;
+}
+
+map<string, BubbleValue>* BubbleValue::GetObjects()
+{
+    assert(this->type == ValueType_Object);
+    return this->u.object.members;
 }
 
 BubbleValue &BubbleValue::operator[](const size_t index)

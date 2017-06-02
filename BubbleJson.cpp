@@ -330,6 +330,7 @@ ParseResults BubbleJson::ParseArray(BubbleValue *bubbleValue)
         BubbleValue valueTmp;
         if ((result = ParseValue(&valueTmp)) != ParseResult_Ok)
             break;
+#warning push_back
         auto iterator = elements->end();
         elements->insert(iterator, valueTmp);
 
@@ -361,6 +362,7 @@ ParseResults BubbleJson::ParseArray(BubbleValue *bubbleValue)
         tmp->MemoryFreeValue();
     }
     delete elements;
+    bubbleValue->u.array.elements = nullptr;
     return result;
 }
 
@@ -368,22 +370,22 @@ ParseResults BubbleJson::ParseObject(BubbleValue *bubbleValue)
 {
     BubbleContext* c = this->context;
     ParseResults result;
-    size_t count = 0;
 
     Expect('{');
     ParseWhitespace();
+
+    map<string, BubbleValue>* members = new map<string, BubbleValue>;
+    bubbleValue->u.object.members = members;
+
     if (*c->json == '}')
     {
         bubbleValue->type = ValueType_Object;
-        bubbleValue->u.object.count = 0;
-        bubbleValue->u.object.member = nullptr;
         c->json++;
         return ParseResult_Ok;
     }
     while (true)
     {
-        BubbleMember memberTmp;
-        char* string;
+        char* c_str;
         size_t length;
 
         if (*c->json != '"')
@@ -391,11 +393,10 @@ ParseResults BubbleJson::ParseObject(BubbleValue *bubbleValue)
             result = ParseResult_MissKey;
             break;
         }
-        if ((result = ParseStringRaw(&string, &length)) != ParseResult_Ok)
+        if ((result = ParseStringRaw(&c_str, &length)) != ParseResult_Ok)
             break;
+        string string(c_str,length);
 
-        memberTmp.SetKey(string, length);
-        //memberTmp.SetKey(string, length);
         ParseWhitespace();
         if (*c->json == ':')
         {
@@ -408,13 +409,11 @@ ParseResults BubbleJson::ParseObject(BubbleValue *bubbleValue)
             break;
         }
 
-        if ((result = ParseValue(memberTmp.value)) != ParseResult_Ok)
+        BubbleValue valueTmp;
+        if ((result = ParseValue(&valueTmp)) != ParseResult_Ok)
             break;
-        //ownership is transferred to member on stack
-        //but the memory alloc by member still in the heap, referred by member on stack
-        //shouldn't free this memory
-        memcpy(BubbleContextPush(sizeof(BubbleMember)), &memberTmp, sizeof(BubbleMember));
-        count++;
+
+        members->emplace(string, valueTmp);
 
         ParseWhitespace();
         if (*c->json == ',')
@@ -425,10 +424,7 @@ ParseResults BubbleJson::ParseObject(BubbleValue *bubbleValue)
         else if (*c->json == '}')
         {
             c->json++;
-            size_t size = sizeof(BubbleMember) * count;
             bubbleValue->type = ValueType_Object;
-            bubbleValue->u.object.count = count;
-            memcpy(bubbleValue->u.object.member = (BubbleMember*)malloc(size), BubbleContextPop(size), size);
             return ParseResult_Ok;
         }
         else
@@ -437,12 +433,14 @@ ParseResults BubbleJson::ParseObject(BubbleValue *bubbleValue)
             break;
         }
     }
-    BubbleMember* tmp;
-    for (int i = 0; i < count; ++i)
+
+    for (auto it = members->begin(); it != members->end(); ++it)
     {
-        tmp = (BubbleMember*)BubbleContextPop(sizeof(BubbleValue));
-        tmp->MemoryFreeAll();
+        //delete (it->first);
+        it->second.MemoryFreeValue();
     }
+    delete members;
+    bubbleValue->u.object.members = nullptr;
     return result;
 }
 

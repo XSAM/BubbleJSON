@@ -7,6 +7,8 @@
 
 #include <cstdlib>
 #include <vector>
+#include <map>
+#include <string>
 #include "Struct.h"
 #include "BubbleMember.h"
 
@@ -23,7 +25,7 @@ private:
         double number;
         struct { char *literal; size_t length; } string;
         struct { std::vector<BubbleValue>* elements; } array;
-        struct { BubbleMember* member; size_t count; } object;
+        struct { std::map<std::string, BubbleValue>* members; } object;
     } u;
     ValueTypes type;
 public:
@@ -53,10 +55,8 @@ public:
     void DeleteArrayElementWithIndex(size_t index);
 
     size_t GetObjectCount();
-    const char* GetObjectKey(size_t index);
-    size_t GetObjectKeyLength(size_t index);
-    BubbleValue* GetObjectValue(size_t index);
-    BubbleMember* GetObjects();
+    BubbleValue * GetObjectValueWithKey(const char *key);
+    std::map<std::string, BubbleValue> * GetObjects();
 
     BubbleValue& operator[](const size_t index);
     BubbleValue& operator[](const size_t index) const;

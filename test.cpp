@@ -404,42 +404,39 @@ static void TestParseObject()
     EXPECT_EQ_INT(ValueType_Object, value->GetType());
     EXPECT_EQ_SIZE_T(7, value->GetObjectCount());
 
-    EXPECT_EQ_STRING("n", value->GetObjectKey(0), value->GetObjectKeyLength(0));
-    EXPECT_EQ_INT(ValueType_Null, value->GetObjectValue(0)->GetType());
-    EXPECT_EQ_STRING("f", value->GetObjectKey(1), value->GetObjectKeyLength(1));
-    EXPECT_EQ_INT(ValueType_False, value->GetObjectValue(1)->GetType());
-    EXPECT_EQ_STRING("t", value->GetObjectKey(2), value->GetObjectKeyLength(2));
-    EXPECT_EQ_INT(ValueType_True, value->GetObjectValue(2)->GetType());
+    EXPECT_TRUE(value->GetObjectValueWithKey("n") != nullptr);
+    EXPECT_EQ_INT(ValueType_Null, value->GetObjectValueWithKey("n")->GetType());
+    EXPECT_TRUE(value->GetObjectValueWithKey("f") != nullptr);
+    EXPECT_EQ_INT(ValueType_False, value->GetObjectValueWithKey("f")->GetType());
+    EXPECT_TRUE(value->GetObjectValueWithKey("t") != nullptr);
+    EXPECT_EQ_INT(ValueType_True, value->GetObjectValueWithKey("t")->GetType());
 
-    EXPECT_EQ_STRING("i", value->GetObjectKey(3), value->GetObjectKeyLength(3));
-    EXPECT_EQ_INT(ValueType_Number, value->GetObjectValue(3)->GetType());
-    EXPECT_EQ_DOUBLE(123.0, value->GetObjectValue(3)->GetNumber());
+    EXPECT_TRUE(value->GetObjectValueWithKey("i") != nullptr);
+    EXPECT_EQ_INT(ValueType_Number, value->GetObjectValueWithKey("i")->GetType());
+    EXPECT_EQ_DOUBLE(123.0, value->GetObjectValueWithKey("i")->GetNumber());
 
-    EXPECT_EQ_STRING("s", value->GetObjectKey(4), value->GetObjectKeyLength(4));
-    EXPECT_EQ_INT(ValueType_String, value->GetObjectValue(4)->GetType());
-    EXPECT_EQ_STRING("abc", value->GetObjectValue(4)->GetString(), value->GetObjectValue(4)->GetStringLength());
+    EXPECT_TRUE(value->GetObjectValueWithKey("s") != nullptr);
+    EXPECT_EQ_INT(ValueType_String, value->GetObjectValueWithKey("s")->GetType());
+    EXPECT_EQ_STRING("abc", value->GetObjectValueWithKey("s")->GetString(), value->GetObjectValueWithKey("s")->GetStringLength());
 
-    EXPECT_EQ_STRING("a", value->GetObjectKey(5), value->GetObjectKeyLength(5));
-    EXPECT_EQ_INT(ValueType_Array, value->GetObjectValue(5)->GetType());
-    EXPECT_EQ_SIZE_T(3, value->GetObjectValue(5)->GetArrayCount());
+    EXPECT_TRUE(value->GetObjectValueWithKey("a") != nullptr);
+    EXPECT_EQ_INT(ValueType_Array, value->GetObjectValueWithKey("a")->GetType());
+    EXPECT_EQ_SIZE_T(3, value->GetObjectValueWithKey("a")->GetArrayCount());
     for (int i = 0; i < 3; ++i)
     {
-        BubbleValue* valueLevel2 = value->GetObjectValue(5)->GetArrayElement(i);
+        BubbleValue* valueLevel2 = value->GetObjectValueWithKey("a")->GetArrayElement(i);
         EXPECT_EQ_INT(ValueType_Number, valueLevel2->GetType());
         EXPECT_EQ_DOUBLE(i + 1.0, valueLevel2->GetNumber());
     }
 
-    EXPECT_EQ_STRING("o", value->GetObjectKey(6), value->GetObjectKeyLength(6));
-    EXPECT_EQ_INT(ValueType_Object, value->GetObjectValue(6)->GetType());
-    EXPECT_EQ_SIZE_T(3, value->GetObjectValue(6)->GetObjectCount());
-    BubbleValue* valueLevel2 = value->GetObjectValue(6);
-    BubbleMember* members = valueLevel2->GetObjects();
+    EXPECT_TRUE(value->GetObjectValueWithKey("o") != nullptr);
+    EXPECT_EQ_INT(ValueType_Object, value->GetObjectValueWithKey("o")->GetType());
+    EXPECT_EQ_SIZE_T(3, value->GetObjectValueWithKey("o")->GetObjectCount());
+    auto objects = value->GetObjectValueWithKey("o")->GetObjects();
     for (int i = 0; i < 3; ++i)
     {
-        EXPECT_TRUE('1'+i == members[i].GetKey()[0]);//magic test
-        EXPECT_EQ_SIZE_T(1, members[i].GetKeyLength());
-        EXPECT_EQ_INT(ValueType_Number, members[i].GetValue()->GetType());
-        EXPECT_EQ_DOUBLE(i + 1.0, members[i].GetValue()->GetNumber());
+        EXPECT_TRUE(objects->find(to_string(i+1)) != objects->end());
+        EXPECT_EQ_DOUBLE(i + 1.0, objects->find(to_string(i+1))->second.GetNumber());
     }
 
     delete value;
