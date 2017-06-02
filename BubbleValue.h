@@ -48,6 +48,9 @@ public:
 
     BubbleValue* GetArrayElement(size_t index);
     size_t GetArrayCount();
+    void SetArray(size_t count);
+    void InsertArrayElementWithIndex(size_t index);
+    void DeleteArrayElementWithIndex(size_t index);
 
     size_t GetObjectCount();
     const char* GetObjectKey(size_t index);

@@ -6,6 +6,7 @@
 #include <cassert>
 
 using namespace bubbleJson;
+using namespace std;
 
 BubbleValue::BubbleValue()
 {
@@ -117,7 +118,8 @@ size_t BubbleValue::GetStringLength()
 
 BubbleValue *BubbleValue::GetArrayElement(size_t index)
 {
-    assert(this->type == ValueType_Array && this->u.array.elements->size() > index);
+    assert(this->type == ValueType_Array);
+    assert(this->u.array.elements->size() > index);
     return &(this->u.array.elements->at(index));
 }
 
@@ -125,6 +127,35 @@ size_t BubbleValue::GetArrayCount()
 {
     assert(this->type == ValueType_Array);
     return this->u.array.elements->size();
+}
+
+void BubbleValue::SetArray(size_t count)
+{
+    assert(count > 0);
+    MemoryFreeValue();
+
+    vector<BubbleValue>* elements = new vector<BubbleValue>(count);
+    this->u.array.elements = elements;
+    this->type = ValueType_Array;
+}
+
+void BubbleValue::InsertArrayElementWithIndex(size_t index)
+{
+    assert(this->type == ValueType_Array);
+    assert(index <= this->u.array.elements->size());//allow same index, insert value to the end
+
+    BubbleValue valueTmp;
+    auto iterator = this->u.array.elements->begin() + index;
+    this->u.array.elements->insert(iterator, valueTmp);
+}
+
+void BubbleValue::DeleteArrayElementWithIndex(size_t index)
+{
+    assert(this->type == ValueType_Array);
+    assert(index < this->u.array.elements->size());
+
+    auto iterator = this->u.array.elements->begin() + index;
+    this->u.array.elements->erase(iterator);
 }
 
 size_t BubbleValue::GetObjectCount()
@@ -154,6 +185,7 @@ BubbleValue *BubbleValue::GetObjectValue(size_t index)
     return this->u.object.member[index].value;
 }
 
+#warning deprecated
 BubbleMember* BubbleValue::GetObjects()
 {
     assert(this->type == ValueType_Object);

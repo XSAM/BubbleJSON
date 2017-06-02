@@ -321,6 +321,52 @@ static void TestParseArray()
     delete value;
 }
 
+static void TestParseArrayInsert()
+{
+    tuple<ParseResults, BubbleValue*> result;
+    BubbleValue *value;
+
+    result = gm_BubbleJson.Parse(" [ true, false ] ");//change [ 12 ]
+    value = get<1>(result);
+    EXPECT_EQ_INT(ParseResult_Ok, get<0>(result));
+    EXPECT_EQ_INT(ValueType_Array, value->GetType());
+
+    value->SetArray(1);
+    (*value)[0].SetBoolean(false);
+    value->InsertArrayElementWithIndex(1);
+    (*value)[1].SetArray(2);
+    (*value)[1][0].SetString("level2", 6);
+
+    //expect [ false , [ "level2" , null ] ]
+    EXPECT_EQ_INT(ValueType_Array, value->GetType());
+    EXPECT_EQ_SIZE_T(2, value->GetArrayCount());
+
+    EXPECT_EQ_STRING("level2", (*value)[1][0].GetString(), (*value)[1][0].GetStringLength());
+    EXPECT_EQ_INT(ValueType_Null, (*value)[1][1].GetType());
+    EXPECT_EQ_SIZE_T(2, (*value)[1].GetArrayCount());
+    delete value;
+}
+
+static void TestParseArrayDelete()
+{
+    tuple<ParseResults, BubbleValue*> result;
+    BubbleValue *value;
+
+    result = gm_BubbleJson.Parse(" [ true, false ] ");
+    value = get<1>(result);
+    EXPECT_EQ_INT(ParseResult_Ok, get<0>(result));
+    EXPECT_EQ_INT(ValueType_Array, value->GetType());
+
+    value->DeleteArrayElementWithIndex(0);
+    value->DeleteArrayElementWithIndex(0);
+
+    //expect [ false , [ "level2" , null ] ]
+    EXPECT_EQ_INT(ValueType_Array, value->GetType());
+    EXPECT_EQ_SIZE_T(0, value->GetArrayCount());
+
+    delete value;
+}
+
 static void TestParseMissCommaOrSquareBracket()
 {
     tuple<ParseResults, BubbleValue*> result;
@@ -415,7 +461,11 @@ static void TestParse()
     TestParseInvalidStringChar();
     TestParseInvalidUnicodeHex();
     TestParseInvalidUnicodeSurrogate();
+
     TestParseArray();
+    TestParseArrayInsert();
+    TestParseArrayDelete();
+
     TestParseMissCommaOrSquareBracket();
     TestParseObject();
 }
