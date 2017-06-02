@@ -388,6 +388,59 @@ static void TestParseObject()
     EXPECT_EQ_SIZE_T(0, value->GetObjectCount());
     delete value;
 
+    //a good way
+    result = gm_BubbleJson.Parse(
+            " { "
+                    "\"n\" : null , "
+                    "\"f\" : false , "
+                    "\"t\" : true , "
+                    "\"i\" : 123 , "
+                    "\"s\" : \"abc\", "
+                    "\"a\" : [ 1, 2, 3 ],"
+                    "\"o\" : { \"1\" : 1, \"2\" : 2, \"3\" : 3 }"
+                    " } "
+    );
+    value = get<1>(result);
+    EXPECT_EQ_INT(ParseResult_Ok, get<0>(result));
+    EXPECT_EQ_INT(ValueType_Object, value->GetType());
+    EXPECT_EQ_SIZE_T(7, value->GetObjectCount());
+
+    EXPECT_TRUE(&(*value)["n"] != nullptr);//kind of weird
+    EXPECT_EQ_INT(ValueType_Null, (*value)["n"].GetType());
+    EXPECT_TRUE(&(*value)["f"] != nullptr);
+    EXPECT_EQ_INT(ValueType_False, (*value)["f"].GetType());
+    EXPECT_TRUE(&(*value)["t"] != nullptr);
+    EXPECT_EQ_INT(ValueType_True, (*value)["t"].GetType());
+
+    EXPECT_TRUE(&(*value)["i"] != nullptr);
+    EXPECT_EQ_INT(ValueType_Number, (*value)["i"].GetType());
+    EXPECT_EQ_DOUBLE(123.0, (*value)["i"].GetNumber());
+
+    EXPECT_TRUE(&(*value)["s"] != nullptr);
+    EXPECT_EQ_INT(ValueType_String, (*value)["s"].GetType());
+    EXPECT_EQ_STRING("abc", (*value)["s"].GetString(), (*value)["s"].GetStringLength());
+
+    EXPECT_TRUE(&(*value)["a"] != nullptr);
+    EXPECT_EQ_INT(ValueType_Array, (*value)["a"].GetType());
+    EXPECT_EQ_SIZE_T(3, (*value)["a"].GetArrayCount());
+    for (int i = 0; i < 3; ++i)
+    {
+        EXPECT_EQ_INT(ValueType_Number, (*value)["a"][i].GetType());
+        EXPECT_EQ_DOUBLE(i + 1.0, (*value)["a"][i].GetNumber());
+    }
+
+    EXPECT_TRUE(&(*value)["o"] != nullptr);
+    EXPECT_EQ_INT(ValueType_Object, (*value)["o"].GetType());
+    EXPECT_EQ_SIZE_T(3, (*value)["o"].GetObjectCount());
+    for (int i = 0; i < 3; ++i)
+    {
+        EXPECT_EQ_INT(ValueType_Number, (*value)["o"][to_string(i+1)].GetType());
+        EXPECT_EQ_DOUBLE(i + 1.0, (*value)["o"][to_string(i+1)].GetNumber());
+    }
+    delete value;
+
+
+    //another way
     result = gm_BubbleJson.Parse(
             " { "
             "\"n\" : null , "
@@ -438,7 +491,6 @@ static void TestParseObject()
         EXPECT_TRUE(objects->find(to_string(i+1)) != objects->end());
         EXPECT_EQ_DOUBLE(i + 1.0, objects->find(to_string(i+1))->second.GetNumber());
     }
-
     delete value;
 }
 

@@ -173,6 +173,13 @@ BubbleValue * BubbleValue::GetObjectValueWithKey(const char *key)
     return it != this->u.object.members->end() ? &it->second : nullptr;
 }
 
+BubbleValue * BubbleValue::GetObjectValueWithKey(const string key)
+{
+    assert(this->type == ValueType_Object);
+    auto it = this->u.object.members->find(key);
+    return it != this->u.object.members->end() ? &it->second : nullptr;
+}
+
 map<string, BubbleValue>* BubbleValue::GetObjects()
 {
     assert(this->type == ValueType_Object);
@@ -189,6 +196,38 @@ BubbleValue &BubbleValue::operator[](const size_t index)
 BubbleValue &BubbleValue::operator[](size_t index) const
 {
     return (const_cast<BubbleValue*>(this))->operator[](index);
+}
+
+BubbleValue &BubbleValue::operator[](const int index)
+{
+    assert(this->type == ValueType_Array
+           && index < this->u.array.elements->size());
+    return this->u.array.elements->at(index);
+}
+
+BubbleValue &BubbleValue::operator[](int index) const
+{
+    return (const_cast<BubbleValue*>(this))->operator[](index);
+}
+
+BubbleValue &BubbleValue::operator[](const char *key)
+{
+    return *this->GetObjectValueWithKey(key);
+}
+
+BubbleValue &BubbleValue::operator[](const char *key) const
+{
+    return (const_cast<BubbleValue*>(this))->operator[](key);
+}
+
+BubbleValue &BubbleValue::operator[](std::string key)
+{
+    return *this->GetObjectValueWithKey(key);
+}
+
+BubbleValue &BubbleValue::operator[](std::string key) const
+{
+    return (const_cast<BubbleValue*>(this))->operator[](key);
 }
 
 void BubbleValue::operator delete(void *bubbleValue)

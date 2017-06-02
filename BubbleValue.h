@@ -56,10 +56,18 @@ public:
 
     size_t GetObjectCount();
     BubbleValue * GetObjectValueWithKey(const char *key);
+    BubbleValue * GetObjectValueWithKey(const std::string key);
     std::map<std::string, BubbleValue> * GetObjects();
 
     BubbleValue& operator[](const size_t index);
     BubbleValue& operator[](const size_t index) const;
+    BubbleValue& operator[](const int index);
+    BubbleValue& operator[](const int index) const;
+    BubbleValue& operator[](const char* key);
+    BubbleValue& operator[](const char* key) const;
+    BubbleValue& operator[](std::string key);
+    BubbleValue& operator[](std::string key) const;
+
     void operator delete(void *bubbleValue);
 };
 
