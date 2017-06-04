@@ -21,6 +21,7 @@ public:
     BubbleJson();
     std::tuple<ParseResults, BubbleValue *> Parse(const char *json);
     std::tuple<ParseResults, BubbleValue *> Parse(const std::string json);
+    std::tuple<char*, size_t > Stringify(BubbleValue *bubbleValue, StringifyTypes stringifyType);
     ~BubbleJson();
 private:
     BubbleContext* context;
@@ -38,11 +39,15 @@ private:
     const char * ParseHexToInt(const char *ch, unsigned *number);
     void EncodeUTF8(unsigned number);
 
-    void MemoryFreeContextStack();
+    void StringifyValue(BubbleValue *value, StringifyTypes stringifyType, int tabCount);
+    void StringifyObject(BubbleValue *value, StringifyTypes stringifyType, int tabCount);
+    void StringifyArray(BubbleValue *value, StringifyTypes stringifyType, int tabCount);
 
-    void BubbleContextPushChar(char ch);
-    void* BubbleContextPush(size_t size);
-    void* BubbleContextPop(size_t size);
+    void MemoryFreeContextStack();
+    void ContextPushChar(char ch);
+    void ContextPushString(const char *string, size_t length);
+    void* ContextPush(size_t size);
+    void* ContextPop(size_t size);
 };
 
 }

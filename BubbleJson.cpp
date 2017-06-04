@@ -131,21 +131,29 @@ ParseResults BubbleJson::ParseStringRaw(char **refString, size_t *refLength)
         {
             case '\"':
                 lenght = c->top - originTop;
-                *refString = (char *) BubbleContextPop(lenght);
+                *refString = (char *) ContextPop(lenght);
                 *refLength = lenght;
                 //current p point '\"' character
                 c->json = p;
                 return ParseResult_Ok;
             case '\\':
                 switch (*p++) {
-                    case '\"': BubbleContextPushChar('\"'); break;
-                    case '\\': BubbleContextPushChar('\\'); break;
-                    case '/':  BubbleContextPushChar('/' ); break;
-                    case 'b':  BubbleContextPushChar('\b'); break;
-                    case 'f':  BubbleContextPushChar('\f'); break;
-                    case 'n':  BubbleContextPushChar('\n'); break;
-                    case 'r':  BubbleContextPushChar('\r'); break;
-                    case 't':  BubbleContextPushChar('\t'); break;
+                    case '\"':
+                        ContextPushChar('\"'); break;
+                    case '\\':
+                        ContextPushChar('\\'); break;
+                    case '/':
+                        ContextPushChar('/'); break;
+                    case 'b':
+                        ContextPushChar('\b'); break;
+                    case 'f':
+                        ContextPushChar('\f'); break;
+                    case 'n':
+                        ContextPushChar('\n'); break;
+                    case 'r':
+                        ContextPushChar('\r'); break;
+                    case 't':
+                        ContextPushChar('\t'); break;
                     case 'u':
                         if (!(p = ParseHexToInt(p, &highSurrogate)))
                             return ReturnError(ParseResult_InvalidUnicodeHex);
@@ -177,7 +185,7 @@ ParseResults BubbleJson::ParseStringRaw(char **refString, size_t *refLength)
                     c->top = originTop;
                     return ParseResult_InvalidStringChar;
                 }
-                BubbleContextPushChar(ch);
+                ContextPushChar(ch);
         }
     }
 }
@@ -236,12 +244,17 @@ void BubbleJson::MemoryFreeContextStack()
     }
 }
 
-inline void BubbleJson::BubbleContextPushChar(char ch)
+inline void BubbleJson::ContextPushChar(char ch)
 {
-    *(char*)BubbleContextPush(sizeof(ch)) = ch;
+    *(char*) ContextPush(sizeof(ch)) = ch;
 }
 
-void* BubbleJson::BubbleContextPush(size_t size)
+inline void BubbleJson::ContextPushString(const char *string, size_t length)
+{
+    memcpy(ContextPush(length), string, length);
+}
+
+void* BubbleJson::ContextPush(size_t size)
 {
     void* result;
     assert(size > 0);
@@ -266,7 +279,7 @@ void* BubbleJson::BubbleContextPush(size_t size)
     return result;
 }
 
-void* BubbleJson::BubbleContextPop(size_t size)
+void* BubbleJson::ContextPop(size_t size)
 {
     assert(this->context->top >= size);
     this->context->top -= size;
@@ -292,24 +305,24 @@ const char * BubbleJson::ParseHexToInt(const char *ch, unsigned *number)
 void BubbleJson::EncodeUTF8(unsigned number)
 {
     if (number <= 0x7F)
-        BubbleContextPushChar(number & 0xFF);
+        ContextPushChar(number & 0xFF);
     else if (number <= 0x7FF)
     {
-        BubbleContextPushChar(0xC0 | ((number >> 6) & 0xFF));
-        BubbleContextPushChar(0x80 | ((number     ) & 0x3F));
+        ContextPushChar(0xC0 | ((number >> 6) & 0xFF));
+        ContextPushChar(0x80 | ((number) & 0x3F));
     }
     else if (number <= 0xFFFF)
     {
-        BubbleContextPushChar(0xE0 | ((number >> 12) & 0xFF));
-        BubbleContextPushChar(0x80 | ((number >> 6) & 0x3F));
-        BubbleContextPushChar(0x80 | ((number     ) & 0x3F));
+        ContextPushChar(0xE0 | ((number >> 12) & 0xFF));
+        ContextPushChar(0x80 | ((number >> 6) & 0x3F));
+        ContextPushChar(0x80 | ((number) & 0x3F));
     }
     else if (number <= 0x10FFFF)
     {
-        BubbleContextPushChar(0xF0 | ((number >> 18) & 0xFF));
-        BubbleContextPushChar(0x80 | ((number >> 12) & 0x3F));
-        BubbleContextPushChar(0x80 | ((number >> 6) & 0x3F));
-        BubbleContextPushChar(0x80 | ((number     ) & 0x3F));
+        ContextPushChar(0xF0 | ((number >> 18) & 0xFF));
+        ContextPushChar(0x80 | ((number >> 12) & 0x3F));
+        ContextPushChar(0x80 | ((number >> 6) & 0x3F));
+        ContextPushChar(0x80 | ((number) & 0x3F));
     }
 }
 
@@ -445,5 +458,84 @@ ParseResults BubbleJson::ParseObject(BubbleValue *bubbleValue)
     delete members;
     bubbleValue->u.object.members = nullptr;
     return result;
+}
+
+std::tuple<char*, size_t > BubbleJson::Stringify(BubbleValue *bubbleValue, StringifyTypes stringifyType)
+{
+    //MemoryFreeContextStack();
+    StringifyValue(bubbleValue, stringifyType, 0);
+    char* json = this->context->stack;
+    size_t length = this->context->top;
+
+    //clear memory mark,but not memory space
+    //ownership is transferred to return value
+    this->context->top = 0;
+    this->context->size = 0;
+    this->context->stack = nullptr;
+    return make_tuple(json, length);
+}
+
+void BubbleJson::StringifyValue(BubbleValue *value, StringifyTypes stringifyType, int tabCount)
+{
+    switch (value->GetType())
+    {
+        case ValueType_Null:    ContextPushString("null", 4); break;
+        case ValueType_True:    ContextPushString("true", 4); break;
+        case ValueType_False:   ContextPushString("false", 5); break;
+        case ValueType_Number:
+            //assume it took 32byte, then reclaim unused memory
+            this->context->top -= 32 - sprintf((char*)ContextPush(32), "%.17g", value->GetNumber());
+            break;
+        case ValueType_String:
+            ContextPushChar('\"');
+            ContextPushString(value->GetString(), value->GetStringLength());
+            ContextPushChar('\"');
+            break;
+        case ValueType_Object:
+            StringifyObject(value, stringifyType, tabCount);
+            break;
+    }
+}
+
+void BubbleJson::StringifyObject(BubbleValue *value, StringifyTypes stringifyType, int tabCount)
+{
+    ContextPushChar('{');
+
+    tabCount++;
+    auto members = value->u.object.members;
+    auto it = members->begin();
+    while (true)
+    {
+        if (stringifyType == StringifyType_Beauty)
+        {
+            ContextPushChar('\n');
+            for (int i = 0; i < tabCount; ++i) { ContextPushChar('\t'); }
+        }
+        ContextPushChar('\"');
+        ContextPushString(it->first.c_str(), it->first.length());
+#warning can do better
+        ContextPushString("\": ", 3);
+        StringifyValue(&it->second, stringifyType, tabCount);
+        it++;
+
+        //reach to last one
+        if(it == members->end())
+            break;
+        else
+            ContextPushChar(',');
+    }
+
+    tabCount--;
+    if (stringifyType == StringifyType_Beauty)
+    {
+        ContextPushChar('\n');
+        for (int i = 0; i < tabCount; ++i) { ContextPushChar('\t'); }
+    }
+    ContextPushChar('}');
+}
+
+void BubbleJson::StringifyArray(BubbleValue *value, StringifyTypes stringifyType, int tabCount)
+{
+
 }
 

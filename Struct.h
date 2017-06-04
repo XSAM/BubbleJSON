@@ -41,6 +41,12 @@ enum ValueTypes
     ValueType_Object,
 };
 
+enum StringifyTypes
+{
+    StringifyType_Beauty,
+    StringifyType_Minimum
+};
+
 struct BubbleContext
 {
     const char* json;

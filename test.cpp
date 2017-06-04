@@ -570,10 +570,37 @@ static void TestParse()
     TestParseObjectDelete();
 }
 
+static void TestStringifyObject()
+{
+    cout<<"TestStringifyObject() result:"<<endl;
+    tuple<ParseResults, BubbleValue*> result;
+    BubbleValue *value;
+
+    result = gm_BubbleJson.Parse(" {\"forecast\":{\"code\":\"28\",\"date\":\"04 Jun 2017\",\"day\":\"Sun\",\"high\":\"63\",\"low\":\"51\",\"text\":\"Mostly Cloudy\"  }} ");
+    value = get<1>(result);
+    auto stringifyResult = gm_BubbleJson.Stringify(value, StringifyType_Beauty);
+    string json = string(get<0>(stringifyResult), get<1>(stringifyResult));
+    cout<<"beauty:\n"<<json<<endl<<endl;
+    free (get<0>(stringifyResult));
+
+    stringifyResult = gm_BubbleJson.Stringify(value, StringifyType_Minimum);
+    json = string(get<0>(stringifyResult), get<1>(stringifyResult));
+    cout<<"minimum:\n"<<json<<endl<<endl;
+    //don't forget free
+    free (get<0>(stringifyResult));
+    delete value;
+}
+
+static void TestStringify()
+{
+    TestStringifyObject();
+}
+
 int main()
 {
 	auto start = chrono::high_resolution_clock::now();
     TestParse();
+    TestStringify();
     auto end = chrono::high_resolution_clock::now();
     auto testParseElapsed = chrono::duration_cast<chrono::milliseconds>(end - start);
 
@@ -581,7 +608,7 @@ int main()
     end = chrono::high_resolution_clock::now();
     auto totalElapsed = chrono::duration_cast<chrono::milliseconds>(end - start);
 
-    cout<<"TestParse() elapsed time:"<<testParseElapsed.count()<<" ms"<<endl;
+    cout<<"unit test elapsed time:"<<testParseElapsed.count()<<" ms"<<endl;
     cout<<"total elapsed time: "<<totalElapsed.count()<<" ms"<<endl;
     printf("%d/%d (%3.2f%%) passed\n", g_TestPass, g_TestCount, g_TestPass * 100.0 / g_TestCount);
 
