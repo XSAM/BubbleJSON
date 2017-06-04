@@ -335,9 +335,8 @@ ParseResults BubbleJson::ParseArray(BubbleValue *bubbleValue)
         BubbleValue valueTmp;
         if ((result = ParseValue(&valueTmp)) != ParseResult_Ok)
             break;
-#warning push_back
-        auto iterator = elements->end();
-        elements->insert(iterator, valueTmp);
+
+        elements->push_back(valueTmp);
 
         ParseWhitespace();
         if (*c->json == ',')
