@@ -10,7 +10,6 @@
 #include <map>
 #include <string>
 #include "Struct.h"
-#include "BubbleMember.h"
 
 namespace bubbleJson {
 
