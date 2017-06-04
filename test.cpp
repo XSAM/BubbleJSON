@@ -360,7 +360,7 @@ static void TestParseArrayDelete()
     value->DeleteArrayElementWithIndex(0);
     value->DeleteArrayElementWithIndex(0);
 
-    //expect [ false , [ "level2" , null ] ]
+    //expect [ ]
     EXPECT_EQ_INT(ValueType_Array, value->GetType());
     EXPECT_EQ_SIZE_T(0, value->GetArrayCount());
 
@@ -494,6 +494,54 @@ static void TestParseObject()
     delete value;
 }
 
+static void TestParseObjectInsert()
+{
+    tuple<ParseResults, BubbleValue*> result;
+    BubbleValue *value;
+
+    result = gm_BubbleJson.Parse(" { \"test\": \"string\" , \"test2\": 123 } ");
+    value = get<1>(result);
+    EXPECT_EQ_INT(ParseResult_Ok, get<0>(result));
+    EXPECT_EQ_INT(ValueType_Object, value->GetType());
+
+    value->InsertObjectElementWithKey("test");
+    EXPECT_EQ_INT(2, value->GetObjectCount());
+
+    value->InsertObjectElementWithKey("level2");
+    (*value)["level2"].SetArray(3);
+    (*value)["level2"][0].SetString("test", 4);
+    (*value)["level2"][1].SetBoolean(true);
+    (*value)["level2"][2].SetObject();
+    (*value)["level2"][2].InsertObjectElementWithKey("level3");
+    (*value)["level2"][2]["level3"].SetNumber(456);
+
+    //expect { "test": "string", "test2": 123, "level2": [ "test", true , "level3": 456 ] }
+    EXPECT_EQ_STRING("test", (*value)["level2"][0].GetString(), (*value)["level2"][0].GetStringLength());
+    EXPECT_EQ_INT(true, (*value)["level2"][1].GetBoolean());
+    EXPECT_EQ_DOUBLE(456.0, (*value)["level2"][2]["level3"].GetNumber());
+    EXPECT_EQ_SIZE_T(3, (*value)["level2"].GetArrayCount());
+    delete value;
+}
+
+static void TestParseObjectDelete()
+{
+    tuple<ParseResults, BubbleValue*> result;
+    BubbleValue *value;
+
+    result = gm_BubbleJson.Parse(" { \"test\": \"string\" , \"test2\": 123 } ");
+    value = get<1>(result);
+    EXPECT_EQ_INT(ParseResult_Ok, get<0>(result));
+    EXPECT_EQ_INT(ValueType_Object, value->GetType());
+
+    value->DeleteObjectElementWithKey("test");
+    value->DeleteObjectElementWithKey("test3");//not exist
+
+    //expect { "test2": 123 }
+    EXPECT_EQ_DOUBLE(123.0, (*value)["test2"].GetNumber());
+    EXPECT_EQ_SIZE_T(1, value->GetObjectCount());
+    delete value;
+}
+
 static void TestParse()
 {
     TestParseNull();
@@ -517,6 +565,8 @@ static void TestParse()
 
     TestParseMissCommaOrSquareBracket();
     TestParseObject();
+    TestParseObjectInsert();
+    TestParseObjectDelete();
 }
 
 int main()

@@ -45,6 +45,7 @@ public:
     double GetNumber();
 
     void SetString(const char* string, size_t length);
+    void SetString(const std::string string);
     const char* GetString();
     size_t GetStringLength();
 
@@ -58,6 +59,11 @@ public:
     BubbleValue * GetObjectValueWithKey(const char *key);
     BubbleValue * GetObjectValueWithKey(const std::string key);
     std::map<std::string, BubbleValue> * GetObjects();
+    void SetObject();
+    void InsertObjectElementWithKey(const char *key, const size_t keyLength);
+    void InsertObjectElementWithKey(const std::string key);
+    void DeleteObjectElementWithKey(const char *key, const size_t keyLength);
+    void DeleteObjectElementWithKey(const std::string key);
 
     BubbleValue& operator[](const size_t index);
     BubbleValue& operator[](const size_t index) const;

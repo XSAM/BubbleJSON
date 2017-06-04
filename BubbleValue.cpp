@@ -4,6 +4,7 @@
 
 #include "BubbleValue.h"
 #include <cassert>
+#include <string>
 
 using namespace bubbleJson;
 using namespace std;
@@ -104,6 +105,11 @@ void BubbleValue::SetString(const char *string, size_t length)
     this->type = ValueType_String;
 }
 
+void BubbleValue::SetString(const string string)
+{
+    SetString(string.c_str(),string.length());
+}
+
 const char *BubbleValue::GetString()
 {
     assert(this->type == ValueType_String
@@ -184,6 +190,47 @@ map<string, BubbleValue>* BubbleValue::GetObjects()
 {
     assert(this->type == ValueType_Object);
     return this->u.object.members;
+}
+
+void BubbleValue::SetObject()
+{
+    MemoryFreeValue();
+
+    map<string, BubbleValue>* members = new map<string, BubbleValue>();
+    this->u.object.members = members;
+    this->type = ValueType_Object;
+}
+
+void BubbleValue::InsertObjectElementWithKey(const char *key, const size_t keyLength)
+{
+    InsertObjectElementWithKey(string(key, keyLength));
+}
+
+void BubbleValue::InsertObjectElementWithKey(const std::string key)
+{
+    assert(this->type == ValueType_Object);
+
+    BubbleValue valueTmp;
+    //prevent overwrite the Value which has the same key
+    this->u.object.members->insert(make_pair(key, valueTmp));
+}
+
+void BubbleValue::DeleteObjectElementWithKey(const char *key, const size_t keyLength)
+{
+    DeleteObjectElementWithKey(string(key, keyLength));
+}
+
+void BubbleValue::DeleteObjectElementWithKey(const std::string key)
+{
+    assert(this->type == ValueType_Object);
+
+    map<string, BubbleValue>* members = this->u.object.members;
+    auto it = members->find(key);
+    if (it != members->end())
+    {
+        it->second.MemoryFreeValue();
+        members->erase(it);
+    }
 }
 
 BubbleValue &BubbleValue::operator[](const size_t index)
