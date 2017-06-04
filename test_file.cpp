@@ -37,7 +37,7 @@ void TestParseFromFile()
     //parse
     auto start = chrono::high_resolution_clock::now();
 
-    result = bubbleJson.Parse(json.c_str());
+    result = bubbleJson.Parse(json);
     value = get<1>(result);
 
     auto end = chrono::high_resolution_clock::now();

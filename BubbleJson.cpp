@@ -46,6 +46,11 @@ tuple<ParseResults, BubbleValue *> BubbleJson::Parse(const char *json)
     return make_pair(result, bubbleValue);
 }
 
+std::tuple<ParseResults, BubbleValue *> BubbleJson::Parse(const std::string json)
+{
+    return Parse(json.c_str());
+}
+
 inline void BubbleJson::Expect(const char expectChar)
 {
     assert(*this->context->json == expectChar);

@@ -20,6 +20,7 @@ class BubbleJson
 public:
     BubbleJson();
     std::tuple<ParseResults, BubbleValue *> Parse(const char *json);
+    std::tuple<ParseResults, BubbleValue *> Parse(const std::string json);
     ~BubbleJson();
 private:
     BubbleContext* context;
