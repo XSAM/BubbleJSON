@@ -10,6 +10,7 @@
 #include <chrono>
 #include "BubbleJson.h"
 #include "Struct.h"
+#include "test_file.h"
 
 
 using namespace std;
@@ -505,7 +506,7 @@ static void TestParseObjectInsert()
     EXPECT_EQ_INT(ValueType_Object, value->GetType());
 
     value->InsertObjectElementWithKey("test");
-    EXPECT_EQ_INT(2, value->GetObjectCount());
+    EXPECT_EQ_SIZE_T(2, value->GetObjectCount());
 
     value->InsertObjectElementWithKey("level2");
     (*value)["level2"].SetArray(3);
@@ -572,13 +573,17 @@ static void TestParse()
 int main()
 {
 	auto start = chrono::high_resolution_clock::now();
-
     TestParse();
+    auto end = chrono::high_resolution_clock::now();
+    auto testParseElapsed = chrono::duration_cast<chrono::milliseconds>(end - start);
+
+    TestParseFromFile();
+    end = chrono::high_resolution_clock::now();
+    auto totalElapsed = chrono::duration_cast<chrono::milliseconds>(end - start);
+
+    cout<<"TestParse() elapsed time:"<<testParseElapsed.count()<<" ms"<<endl;
+    cout<<"total elapsed time: "<<totalElapsed.count()<<" ms"<<endl;
     printf("%d/%d (%3.2f%%) passed\n", g_TestPass, g_TestCount, g_TestPass * 100.0 / g_TestCount);
 
-	//this_thread::sleep_for(chrono::seconds(1));
-	auto end = chrono::high_resolution_clock::now();	
-	auto elapsed = chrono::duration_cast<chrono::milliseconds>(end - start);
-	cout<<"elapsed time: "<<elapsed.count()<<" ms"<<endl;
     return g_Result;
 }
