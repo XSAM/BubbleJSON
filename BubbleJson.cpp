@@ -412,7 +412,6 @@ ParseResults BubbleJson::ParseObject(BubbleValue *bubbleValue)
         BubbleValue valueTmp;
         if ((result = ParseValue(&valueTmp)) != ParseResult_Ok)
             break;
-
         members->emplace(string, valueTmp);
 
         ParseWhitespace();

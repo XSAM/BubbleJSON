@@ -326,7 +326,7 @@ static void TestParseArrayInsert()
     tuple<ParseResults, BubbleValue*> result;
     BubbleValue *value;
 
-    result = gm_BubbleJson.Parse(" [ true, false ] ");//change [ 12 ]
+    result = gm_BubbleJson.Parse(" [ true, false ] ");
     value = get<1>(result);
     EXPECT_EQ_INT(ParseResult_Ok, get<0>(result));
     EXPECT_EQ_INT(ValueType_Array, value->GetType());

@@ -19,7 +19,6 @@ class BubbleMember;
 class BubbleValue
 {
 private:
-    bool isRoot;//only root can invoke MemoryFreeValue while destruct
     union
     {
         double number;
@@ -29,6 +28,7 @@ private:
     } u;
     ValueTypes type;
 public:
+    bool isRoot;//only root can invoke MemoryFreeValue while delete
     friend class BubbleJson;
     BubbleValue();
     ~BubbleValue();
