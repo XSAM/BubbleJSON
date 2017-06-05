@@ -8,8 +8,7 @@
 #include <cstring>
 #include <thread>
 #include <chrono>
-#include "BubbleJson.h"
-#include "Struct.h"
+#include "BubbleJSON/BubbleJson.h"
 #include "test_file.h"
 
 

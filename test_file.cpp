@@ -3,7 +3,7 @@
 //
 
 #include "test_file.h"
-#include "BubbleJson.h"
+#include "BubbleJSON/BubbleJson.h"
 #include <iostream>
 #include <fstream>
 #include <tuple>
