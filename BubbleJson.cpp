@@ -462,7 +462,7 @@ ParseResults BubbleJson::ParseObject(BubbleValue *bubbleValue)
 
 std::tuple<char*, size_t > BubbleJson::Stringify(BubbleValue *bubbleValue, StringifyTypes stringifyType)
 {
-    //MemoryFreeContextStack();
+    MemoryFreeContextStack();
     StringifyValue(bubbleValue, stringifyType, 0);
     char* json = this->context->stack;
     size_t length = this->context->top;
@@ -494,6 +494,11 @@ void BubbleJson::StringifyValue(BubbleValue *value, StringifyTypes stringifyType
         case ValueType_Object:
             StringifyObject(value, stringifyType, tabCount);
             break;
+        case ValueType_Array:
+            StringifyArray(value, stringifyType, tabCount);
+            break;
+        default:
+            assert(false);
     }
 }
 
@@ -536,6 +541,34 @@ void BubbleJson::StringifyObject(BubbleValue *value, StringifyTypes stringifyTyp
 
 void BubbleJson::StringifyArray(BubbleValue *value, StringifyTypes stringifyType, int tabCount)
 {
+    ContextPushChar('[');
 
+    tabCount++;
+    auto elements = value->u.array.elements;
+    auto it = elements->begin();
+    while (true)
+    {
+        if(stringifyType == StringifyType_Beauty)
+        {
+            ContextPushChar('\n');
+            for (int i = 0; i < tabCount; ++i) { ContextPushChar('\t'); }
+        }
+        StringifyValue(&*it, stringifyType, tabCount);//weird
+        it++;
+
+        //reach to last one
+        if(it == elements->end())
+            break;
+        else
+            ContextPushChar(',');
+    }
+
+    tabCount--;
+    if (stringifyType == StringifyType_Beauty)
+    {
+        ContextPushChar('\n');
+        for (int i = 0; i < tabCount; ++i) { ContextPushChar('\t'); }
+    }
+    ContextPushChar(']');
 }
 
