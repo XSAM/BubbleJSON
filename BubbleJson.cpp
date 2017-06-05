@@ -518,8 +518,10 @@ void BubbleJson::StringifyObject(BubbleValue *value, StringifyTypes stringifyTyp
         }
         ContextPushChar('\"');
         ContextPushString(it->first.c_str(), it->first.length());
-#warning can do better
-        ContextPushString("\": ", 3);
+        if (stringifyType == StringifyType_Beauty)
+            ContextPushString("\": ", 3);
+        else
+            ContextPushString("\":", 2);
         StringifyValue(&it->second, stringifyType, tabCount);
         it++;
 
