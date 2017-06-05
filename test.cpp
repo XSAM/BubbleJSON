@@ -578,7 +578,7 @@ static void TestStringifyObject()
 
     result = gm_BubbleJson.Parse(" {\"forecast\":{\"code\":\"28\",\"date\":\"04 Jun 2017\",\"day\":\"Sun\",\"high\":\"63\",\"low\":\"51\",\"text\":\"Mostly Cloudy\"  }} ");
     value = get<1>(result);
-    auto stringifyResult = gm_BubbleJson.Stringify(value, StringifyType_Beauty);
+    auto stringifyResult = gm_BubbleJson.Stringify(value);//StringifyType_Beauty is default option
     string json = string(get<0>(stringifyResult), get<1>(stringifyResult));
     cout<<"beauty:\n"<<json<<endl<<endl;
     free (get<0>(stringifyResult));
@@ -600,7 +600,7 @@ static void TestStringifyArray()
     result = gm_BubbleJson.Parse(" {\"forecast\":[{\"code\":\"28\",\"date\":\"04 Jun 2017\",\"day\":\"Sun\",\"high\":\"63\",\"low\":\"51\",\"text\":\"Mostly Cloudy\"},{\"code\":\"26\",\"date\":\"05 Jun 2017\",\"day\":\"Mon\",\"high\":\"68\",\"low\":\"52\",\"text\":\"Cloudy\"}]} ");
     value = get<1>(result);
     //cout<<get<0>(result)<<endl;
-    auto stringifyResult = gm_BubbleJson.Stringify(value, StringifyType_Beauty);
+    auto stringifyResult = gm_BubbleJson.Stringify(value);//StringifyType_Beauty is default option
     string json = string(get<0>(stringifyResult), get<1>(stringifyResult));
     cout<<"beauty:\n"<<json<<endl<<endl;
     free (get<0>(stringifyResult));

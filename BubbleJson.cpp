@@ -525,7 +525,7 @@ void BubbleJson::StringifyObject(BubbleValue *value, StringifyTypes stringifyTyp
         StringifyValue(&it->second, stringifyType, tabCount);
         it++;
 
-        //reach to last one
+        //reach the last one
         if(it == members->end())
             break;
         else
@@ -558,7 +558,7 @@ void BubbleJson::StringifyArray(BubbleValue *value, StringifyTypes stringifyType
         StringifyValue(&*it, stringifyType, tabCount);//weird
         it++;
 
-        //reach to last one
+        //reach the last one
         if(it == elements->end())
             break;
         else

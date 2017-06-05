@@ -21,7 +21,7 @@ public:
     BubbleJson();
     std::tuple<ParseResults, BubbleValue *> Parse(const char *json);
     std::tuple<ParseResults, BubbleValue *> Parse(const std::string json);
-    std::tuple<char*, size_t > Stringify(BubbleValue *bubbleValue, StringifyTypes stringifyType);
+    std::tuple<char*, size_t > Stringify(BubbleValue *bubbleValue, StringifyTypes stringifyType = StringifyType_Beauty);
     ~BubbleJson();
 private:
     BubbleContext* context;
