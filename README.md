@@ -23,7 +23,7 @@ To run test follow these steps:
 
 # Example
 
-This simple example show a way to **parse/modification/stringify** *json* with `BubbleJSON`
+This simple example show a way to **parse/modify/stringify** *json* with `BubbleJSON`
 
 ```c++
 #include <iostream>
